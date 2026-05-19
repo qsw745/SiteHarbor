@@ -48,6 +48,8 @@ npm run typecheck
 npm run build
 ```
 
+Docker builds use `npm run build:docker` and skip Next.js' internal typecheck so weak servers can build without hanging. Always run `npm run typecheck` locally before pushing.
+
 ## Production Deployment
 
 Target server:

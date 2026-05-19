@@ -32,6 +32,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Server check on 2026-05-19: `nginx` command was not installed, so do not assume Nginx is available until the real domain/proxy choice is confirmed.
 - Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
+- Docker production builds use `npm run build:docker`, which skips Next.js internal typechecking; run `npm run typecheck` locally before pushing.
 
 ## Operational Commands
 
