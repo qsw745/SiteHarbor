@@ -15,6 +15,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
 - Production runtime: Docker Compose.
 - Docker image base stage installs `openssl` and `ca-certificates` from Aliyun Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
+- Deployment should build the `linux/amd64` Docker image locally with `scripts/deploy-image.sh`, upload it to the server, and start with `docker compose up -d --no-build`; avoid running expensive builds on the low-memory server.
 - Reverse proxy: Nginx on the host.
 
 ## Repository
@@ -56,11 +57,7 @@ npm run hash-password -- "new-admin-password"
 Server update:
 
 ```bash
-ssh root@101.37.21.147
-cd /opt/siteharbor
-git pull
-docker compose up -d --build
-docker compose logs -f --tail=100
+./scripts/deploy-image.sh
 ```
 
 Server rollback:
@@ -70,7 +67,7 @@ ssh root@101.37.21.147
 cd /opt/siteharbor
 git log --oneline -5
 git checkout <stable-commit>
-docker compose up -d --build
+docker compose up -d --no-build
 ```
 
 ## Maintenance Rules

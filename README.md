@@ -48,7 +48,7 @@ npm run typecheck
 npm run build
 ```
 
-Docker builds use `npm run build:docker` and skip Next.js' internal typecheck so weak servers can build without hanging. Always run `npm run typecheck` locally before pushing.
+Docker builds use `npm run build:docker` and skip Next.js' internal typecheck. Production deployment builds the `linux/amd64` Docker image locally and uploads it to the server, so the low-memory server does not run `npm ci` or `next build`.
 
 ## Production Deployment
 
@@ -82,12 +82,10 @@ SESSION_SECRET="replace_with_at_least_32_random_characters"
 NEXT_PUBLIC_APP_URL="https://<PORTAL_DOMAIN>"
 ```
 
-Start the app:
+Build locally, upload the image, and start the app:
 
 ```bash
-docker compose up -d --build
-docker compose ps
-docker compose logs -f --tail=100
+./scripts/deploy-image.sh
 ```
 
 Nginx:
@@ -119,12 +117,10 @@ git push
 Server update:
 
 ```bash
-ssh root@101.37.21.147
-cd /opt/siteharbor
-git pull
-docker compose up -d --build
-docker compose logs -f --tail=100
+./scripts/deploy-image.sh
 ```
+
+The deploy script runs local lint/typecheck, builds a `linux/amd64` image, sends a Git bundle and image archive to the server, loads the image there, then runs `docker compose up -d --no-build`.
 
 ## Rollback
 
@@ -133,7 +129,7 @@ ssh root@101.37.21.147
 cd /opt/siteharbor
 git log --oneline -5
 git checkout <stable-commit>
-docker compose up -d --build
+docker compose up -d --no-build
 ```
 
 SQLite data is stored in the Docker volume `siteharbor-data`, so code rollback does not delete site records.
