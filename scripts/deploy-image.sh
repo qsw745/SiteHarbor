@@ -61,7 +61,7 @@ git fetch "$BUNDLE" "$BRANCH"
 git merge --ff-only FETCH_HEAD
 
 docker load -i "$IMAGE_ARCHIVE"
-docker compose $COMPOSE_FILES up -d --no-build
+docker compose $COMPOSE_FILES up -d --no-build --force-recreate
 docker compose $COMPOSE_FILES ps
 
 for attempt in $(seq 1 20); do

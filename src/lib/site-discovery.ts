@@ -30,9 +30,11 @@ const EXCLUDED_PATH_PREFIXES = [
   "/admin-api/",
   "/api/",
   "/benliu-api/",
+  "/benliu-admin/",
   "/clipboard/",
   "/downloads/",
   "/input/",
+  "/ws/",
 ];
 
 const EXCLUDED_EXACT_PATHS = new Set([
@@ -43,21 +45,25 @@ const EXCLUDED_EXACT_PATHS = new Set([
   "/session/trust",
 ]);
 
-const KNOWN_SITE_DETAILS: Record<string, Pick<DiscoveredSite, "description" | "name">> = {
+const KNOWN_SITE_DETAILS: Record<string, Pick<DiscoveredSite, "description" | "name" | "slug">> = {
   "https://qisw.top/": {
     name: "网站管理",
+    slug: "siteharbor",
     description: "服务器网站聚合管理入口。",
   },
   "https://qisw.top/benliu/": {
     name: "奔流",
+    slug: "benliu",
     description: "部署在 qisw.top 下的奔流产品网站。",
   },
   "https://qisw.top/birthday/": {
     name: "生日提醒",
+    slug: "birthday",
     description: "部署在 qisw.top 下的生日提醒服务。",
   },
   "https://profiledock.qisw.top/": {
     name: "ProfileDock",
+    slug: "profiledock",
     description: "ProfileDock 产品网站。",
   },
 };
@@ -108,8 +114,9 @@ function discoverFromNginxConfig(content: string) {
   for (const server of findBlocks(stripped, "server")) {
     const domains = extractServerNames(server.body).filter(isPublicDomain);
     if (!domains.length) continue;
+    if (!isHttpsServer(server.body)) continue;
 
-    const protocol = isHttpsServer(server.body) ? "https" : "http";
+    const protocol = "https";
     const primaryDomain = pickPrimaryDomain(domains);
     if (!primaryDomain) continue;
 
@@ -218,12 +225,13 @@ function makeSite(protocol: string, domain: string, sitePath: string, index: num
   const known = KNOWN_SITE_DETAILS[url];
   const fallbackName = sitePath === "/" ? titleFromDomain(domain) : titleFromPath(sitePath);
   const name = known?.name ?? fallbackName;
+  const fallbackSlug = makeSlug(name) || makeSlug(`${domain}-${sitePath}`);
 
   return {
     description: known?.description ?? `从 Nginx 配置自动发现：${url}`,
     iconUrl: `${protocol}://${domain}/favicon.ico`,
     name,
-    slug: makeSlug(name || `${domain}-${sitePath}`),
+    slug: known?.slug ?? fallbackSlug,
     sortOrder: index * 10,
     url,
   };
