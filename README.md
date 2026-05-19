@@ -131,6 +131,8 @@ Server update:
 
 The deploy script runs local lint/typecheck, builds a `linux/amd64` image, sends a Git bundle and image archive to the server, loads the image there, then runs `docker compose up -d --no-build`.
 
+On the production server, `docker-compose.server.yml` mounts `/opt/nginx/conf.d` read-only into the container. The admin site scan button uses that mount to discover product sites from Nginx config without giving the app write access to Nginx.
+
 ## Rollback
 
 ```bash

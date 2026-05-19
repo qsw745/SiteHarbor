@@ -52,14 +52,28 @@ ssh "$SERVER" "REMOTE_DIR='$REMOTE_DIR' BRANCH='$BRANCH' IMAGE_ARCHIVE='$REMOTE_
 set -euo pipefail
 
 cd "$REMOTE_DIR"
+COMPOSE_FILES="-f docker-compose.yml"
+if [ -f docker-compose.server.yml ]; then
+  COMPOSE_FILES="$COMPOSE_FILES -f docker-compose.server.yml"
+fi
 
 git fetch "$BUNDLE" "$BRANCH"
 git merge --ff-only FETCH_HEAD
 
 docker load -i "$IMAGE_ARCHIVE"
-docker compose up -d --no-build
-docker compose ps
-curl -fsSI http://127.0.0.1:3000 >/tmp/siteharbor-healthcheck.txt
+docker compose $COMPOSE_FILES up -d --no-build
+docker compose $COMPOSE_FILES ps
+
+for attempt in $(seq 1 20); do
+  if curl -fsSI http://127.0.0.1:3000 >/tmp/siteharbor-healthcheck.txt; then
+    break
+  fi
+  if [ "$attempt" = "20" ]; then
+    cat /tmp/siteharbor-healthcheck.txt >&2 || true
+    exit 1
+  fi
+  sleep 2
+done
 
 rm -f "$IMAGE_ARCHIVE" "$BUNDLE"
 REMOTE

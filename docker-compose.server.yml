@@ -1,0 +1,6 @@
+services:
+  siteharbor:
+    environment:
+      DISCOVERY_NGINX_CONF_DIR: /host/nginx/conf.d
+    volumes:
+      - /opt/nginx/conf.d:/host/nginx/conf.d:ro

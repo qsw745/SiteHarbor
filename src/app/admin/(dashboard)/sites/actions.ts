@@ -3,6 +3,7 @@
 import { adminPath } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { discoverServerSites } from "@/lib/site-discovery";
 import { normalizeSlug } from "@/lib/slug";
 import { firstZodError, formString, siteFormSchema } from "@/lib/validation";
 import { Prisma } from "@prisma/client";
@@ -107,4 +108,104 @@ export async function deleteSiteAction(id: string) {
 
   revalidatePath("/");
   redirectToSites({ ok: "site-deleted" });
+}
+
+export async function syncDiscoveredSitesAction() {
+  await requireAdmin();
+  const discoveredSites = await discoverServerSites();
+
+  if (!discoveredSites.length) {
+    redirectToSites({
+      error: "没有发现可导入的网站。请确认服务器已挂载 Nginx 配置目录。",
+    });
+  }
+
+  const category = await prisma.category.upsert({
+    where: { slug: "products" },
+    update: { name: "产品网站" },
+    create: {
+      name: "产品网站",
+      slug: "products",
+      sortOrder: 0,
+    },
+  });
+
+  const existingSites = await prisma.site.findMany({
+    select: {
+      categoryId: true,
+      description: true,
+      iconUrl: true,
+      id: true,
+      slug: true,
+      url: true,
+    },
+  });
+  const existingByUrl = new Map(existingSites.map((site) => [canonicalUrl(site.url), site]));
+  const usedSlugs = new Set(existingSites.map((site) => site.slug));
+  let created = 0;
+  let updated = 0;
+
+  for (const discovered of discoveredSites) {
+    const existing = existingByUrl.get(canonicalUrl(discovered.url));
+
+    if (existing) {
+      const updateData: Prisma.SiteUpdateInput = {
+        active: true,
+        category: { connect: { id: category.id } },
+      };
+
+      if (!existing.description) updateData.description = discovered.description;
+      if (!existing.iconUrl) updateData.iconUrl = discovered.iconUrl;
+
+      await prisma.site.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
+      updated += 1;
+      continue;
+    }
+
+    const slug = nextAvailableSlug(discovered.slug, usedSlugs);
+    usedSlugs.add(slug);
+
+    await prisma.site.create({
+      data: {
+        active: true,
+        categoryId: category.id,
+        description: discovered.description,
+        iconUrl: discovered.iconUrl,
+        name: discovered.name,
+        slug,
+        sortOrder: discovered.sortOrder,
+        url: discovered.url,
+      },
+    });
+    created += 1;
+  }
+
+  revalidatePath("/");
+  redirectToSites({ ok: `已同步 ${created} 个新站点，更新 ${updated} 个已有站点。` });
+}
+
+function canonicalUrl(value: string) {
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    url.search = "";
+    url.pathname = url.pathname === "/" ? "/" : `${url.pathname.replace(/\/+$/, "")}/`;
+    return url.toString();
+  } catch {
+    return value.replace(/\/+$/, "");
+  }
+}
+
+function nextAvailableSlug(baseSlug: string, usedSlugs: Set<string>) {
+  const base = baseSlug || normalizeSlug("", "site");
+  let slug = base;
+  let index = 2;
+  while (usedSlugs.has(slug)) {
+    slug = `${base}-${index}`;
+    index += 1;
+  }
+  return slug;
 }

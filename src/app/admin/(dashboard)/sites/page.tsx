@@ -1,6 +1,7 @@
 import {
   createSiteAction,
   deleteSiteAction,
+  syncDiscoveredSitesAction,
   toggleSiteAction,
   updateSiteAction,
 } from "./actions";
@@ -15,6 +16,7 @@ import {
   Link2,
   MousePointerClick,
   Plus,
+  RefreshCcw,
   Save,
   Search,
   Server,
@@ -76,10 +78,18 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
                 管理站点 URL、分类、状态和跳转统计。启用的站点会显示在公开首页。
               </p>
             </div>
-            <Link className="btn-primary w-fit" href="/">
-              <ExternalLink size={17} aria-hidden />
-              查看首页
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <form action={syncDiscoveredSitesAction}>
+                <button className="btn-secondary" type="submit">
+                  <RefreshCcw size={17} aria-hidden />
+                  扫描现有站点
+                </button>
+              </form>
+              <Link className="btn-primary w-fit" href="/">
+                <ExternalLink size={17} aria-hidden />
+                查看首页
+              </Link>
+            </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
@@ -131,7 +141,7 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
       </section>
 
       {error ? <div className="message-error">{error}</div> : null}
-      {ok ? <div className="message-ok">{okMessages[ok] ?? "操作已完成。"}</div> : null}
+      {ok ? <div className="message-ok">{okMessages[ok] ?? ok}</div> : null}
 
       <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="grid gap-4">
