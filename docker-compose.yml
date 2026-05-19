@@ -1,0 +1,16 @@
+services:
+  siteharbor:
+    build: .
+    container_name: siteharbor
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "file:/app/data/siteharbor.db"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - siteharbor-data:/app/data
+
+volumes:
+  siteharbor-data:

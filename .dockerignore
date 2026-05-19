@@ -1,0 +1,16 @@
+.git
+.next
+node_modules
+data
+prisma/data
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+.env
+.env*.local
+logs
+*.log
+coverage
+.DS_Store
+tsconfig.tsbuildinfo

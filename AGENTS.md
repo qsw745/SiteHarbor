@@ -1,0 +1,81 @@
+# SiteHarbor Long-Term Memory
+
+## Project Intent
+
+SiteHarbor is a website aggregation and management portal for a server that hosts multiple websites. The public page lets visitors search, filter, and jump to managed sites. The admin area maintains site entries, categories, ordering, and enabled/disabled state.
+
+## Current Architecture
+
+- Framework: Next.js App Router with TypeScript.
+- UI: Tailwind CSS with a restrained admin-console style.
+- Database: Prisma + SQLite.
+- Authentication: one administrator password, stored as `ADMIN_PASSWORD_HASH`; login session is an HTTP-only signed cookie using `SESSION_SECRET`.
+- Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
+- Production runtime: Docker Compose.
+- Reverse proxy: Nginx on the host.
+
+## Repository
+
+- Local path: `/Users/qsw/work/project/SiteHarbor`
+- GitHub owner: `qsw745`
+- Intended repo: `qsw745/SiteHarbor`
+- Visibility: public
+- Main branch: `main`
+
+## Server And Deployment
+
+- Server IP: `101.37.21.147`
+- SSH user: `root`
+- Deploy path: `/opt/siteharbor`
+- Container binding: `127.0.0.1:3000:3000`
+- Nginx domain placeholder: `<PORTAL_DOMAIN>`
+- Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
+- Production database URL inside container: `file:/app/data/siteharbor.db`
+
+## Operational Commands
+
+Local verification:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Generate admin password hash:
+
+```bash
+npm run hash-password -- "new-admin-password"
+```
+
+Server update:
+
+```bash
+ssh root@101.37.21.147
+cd /opt/siteharbor
+git pull
+docker compose up -d --build
+docker compose logs -f --tail=100
+```
+
+Server rollback:
+
+```bash
+ssh root@101.37.21.147
+cd /opt/siteharbor
+git log --oneline -5
+git checkout <stable-commit>
+docker compose up -d --build
+```
+
+## Maintenance Rules
+
+- Never commit `.env`, SQLite database files, production logs, SSH keys, tokens, or real server credentials.
+- Keep production site data in SQLite on the server, not in the public GitHub repository.
+- Update this file when architecture, deployment paths, server details, or operational commands change.
+- Keep the first version single-admin unless a future requirement explicitly asks for multi-user roles.
+- Do not edit existing Nginx site configs without first identifying which domain/server block is affected.
+
+## Pending External Input
+
+- Replace `<PORTAL_DOMAIN>` with the real public domain before running Nginx and Certbot deployment commands.
