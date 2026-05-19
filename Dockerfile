@@ -1,5 +1,6 @@
 FROM node:24-bookworm-slim AS deps
 WORKDIR /app
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
@@ -18,6 +19,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
