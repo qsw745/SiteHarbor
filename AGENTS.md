@@ -16,7 +16,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Production runtime: Docker Compose.
 - Docker image base stage installs `openssl` and `ca-certificates` from Aliyun Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
 - Deployment should build the `linux/amd64` Docker image locally with `scripts/deploy-image.sh`, upload it to the server, and start with `docker compose up -d --no-build`; avoid running expensive builds on the low-memory server.
-- Reverse proxy: Nginx on the host.
+- Reverse proxy: existing Docker container named `nginx`, with config mounted from `/opt/nginx/conf.d` and certificates from `/opt/nginx/ssl`.
 
 ## Repository
 
@@ -32,8 +32,13 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - SSH user: `root`
 - Deploy path: `/opt/siteharbor`
 - Container binding: `127.0.0.1:3000:3000`
-- Nginx domain placeholder: `<PORTAL_DOMAIN>`
-- Server check on 2026-05-19: `nginx` command was not installed, so do not assume Nginx is available until the real domain/proxy choice is confirmed.
+- Public domain: `https://qisw.top/`
+- Production `NEXT_PUBLIC_APP_URL`: `https://qisw.top`
+- Active Nginx config: `/opt/nginx/conf.d/site.conf`
+- Active TLS certificate files: `/opt/nginx/ssl/qisw.top.pem` and `/opt/nginx/ssl/qisw.top.key`
+- The `nginx` Docker container must be connected to Docker network `siteharbor_default` so it can proxy to `http://siteharbor:3000`.
+- Production Nginx change on 2026-05-19: `/` plus `/admin` and `/admin/*` on `qisw.top` proxy to SiteHarbor. Existing paths such as `/benliu/`, `/birthday/`, and legacy `/api/` routes remain in `site.conf`.
+- Nginx backup from the SiteHarbor cutover: `/opt/nginx/conf.d/site.conf.bak-siteharbor-20260519174601`
 - Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
 - Docker production builds use `npm run build:docker`, which skips Next.js internal typechecking; run `npm run typecheck` locally before pushing.
@@ -60,6 +65,14 @@ Server update:
 ./scripts/deploy-image.sh
 ```
 
+Nginx validation/reload:
+
+```bash
+ssh root@101.37.21.147
+docker exec nginx nginx -t
+docker exec nginx nginx -s reload
+```
+
 Server rollback:
 
 ```bash
@@ -80,4 +93,4 @@ docker compose up -d --no-build
 
 ## Pending External Input
 
-- Replace `<PORTAL_DOMAIN>` with the real public domain before running Nginx and Certbot deployment commands.
+- No domain placeholder is pending. Current production domain is `https://qisw.top/`.

@@ -58,8 +58,8 @@ Target server:
 - SSH user: `root`
 - App directory: `/opt/siteharbor`
 - Container port binding: `127.0.0.1:3000:3000`
-- Reverse proxy: existing Nginx
-- Final domain placeholder: `<PORTAL_DOMAIN>`
+- Reverse proxy: existing Docker `nginx` container
+- Public domain: `https://qisw.top/`
 
 Initial deployment on the server:
 
@@ -82,26 +82,35 @@ SESSION_SECRET="replace_with_at_least_32_random_characters"
 NEXT_PUBLIC_APP_URL="https://<PORTAL_DOMAIN>"
 ```
 
+For the current production deployment, use:
+
+```env
+NEXT_PUBLIC_APP_URL="https://qisw.top"
+```
+
 Build locally, upload the image, and start the app:
 
 ```bash
 ./scripts/deploy-image.sh
 ```
 
-Nginx:
+Current Nginx deployment:
 
 ```bash
-cp deploy/nginx.siteharbor.conf /etc/nginx/sites-available/siteharbor.conf
-sed -i 's/<PORTAL_DOMAIN>/your-real-domain.example/g' /etc/nginx/sites-available/siteharbor.conf
-ln -s /etc/nginx/sites-available/siteharbor.conf /etc/nginx/sites-enabled/siteharbor.conf
-nginx -t
-systemctl reload nginx
+ssh root@101.37.21.147
+docker network connect siteharbor_default nginx 2>/dev/null || true
+docker exec nginx nginx -t
+docker exec nginx nginx -s reload
 ```
 
-HTTPS with Certbot:
+The active config is `/opt/nginx/conf.d/site.conf`. The `qisw.top` TLS certificate is already mounted at `/opt/nginx/ssl/qisw.top.pem` and `/opt/nginx/ssl/qisw.top.key`. In production, `/`, `/admin`, and `/admin/*` on `qisw.top` proxy to `http://siteharbor:3000` from inside the Nginx container.
+
+Health checks:
 
 ```bash
-certbot --nginx -d your-real-domain.example
+ssh root@101.37.21.147 'curl -I http://127.0.0.1:3000'
+curl -I https://qisw.top/
+curl -I https://qisw.top/admin/login
 ```
 
 ## Updates
@@ -139,5 +148,5 @@ SQLite data is stored in the Docker volume `siteharbor-data`, so code rollback d
 - Do not commit `.env`, SQLite database files, server credentials, or production logs.
 - Use a long random `SESSION_SECRET`.
 - Wrap bcrypt hashes in single quotes in `.env` so Docker Compose does not treat `$` characters as variable interpolation.
-- Replace `<PORTAL_DOMAIN>` before enabling HTTPS.
+- Production HTTPS currently uses `https://qisw.top/`.
 - Keep the GitHub repository public only because no production secrets or data are committed.
