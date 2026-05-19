@@ -27,7 +27,7 @@ export function LoginForm() {
       {state.error ? <div className="message-error">{state.error}</div> : null}
 
       <button className="btn-primary" disabled={pending} type="submit">
-        <LogIn size={18} aria-hidden />
+        <LogIn size={15} aria-hidden />
         {pending ? "登录中" : "登录后台"}
       </button>
     </form>

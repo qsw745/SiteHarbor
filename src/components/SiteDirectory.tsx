@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, Search, ShieldCheck } from "lucide-react";
+import { SiteAvatar } from "@/components/SiteAvatar";
+import { ArrowUpRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export type DirectoryCategory = {
@@ -35,7 +36,9 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
 
     return sites.filter((site) => {
       const matchesCategory =
-        category === "all" || site.categorySlug === category || (!site.categorySlug && category === "uncategorized");
+        category === "all" ||
+        site.categorySlug === category ||
+        (!site.categorySlug && category === "uncategorized");
       const searchable = [site.name, site.description, site.url, site.categoryName]
         .filter(Boolean)
         .join(" ")
@@ -45,116 +48,99 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
     });
   }, [category, query, sites]);
 
-  return (
-    <main className="min-h-screen pb-16">
-      <section className="border-b border-[var(--line)] bg-[#fbfaf6]/80 backdrop-blur">
-        <div className="shell py-8 md:py-12">
-          <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-sm font-semibold text-[var(--muted)]">
-                <ShieldCheck size={16} aria-hidden />
-                SiteHarbor
-              </div>
-              <h1 className="text-4xl font-black tracking-normal text-balance md:text-6xl">
-                统一管理你的服务器网站入口
-              </h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[var(--muted)] md:text-lg">
-                访问者在这里选择目标站点，后台集中维护链接、分类、排序和启停状态。
-              </p>
-            </div>
+  const hasUncategorized = sites.some((site) => !site.categorySlug);
 
-            <a className="btn-secondary w-fit" href="/admin/sites">
-              管理后台
-            </a>
+  return (
+    <main className="min-h-screen pb-20">
+      <section className="pt-16 md:pt-24">
+        <div className="shell">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--muted-strong)] shadow-[var(--shadow-sm)]">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+              SiteHarbor
+            </span>
+            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-5xl md:leading-[1.1]">
+              统一管理你的
+              <br className="hidden sm:block" />
+              <span
+                style={{
+                  backgroundImage: "linear-gradient(90deg, #4f46e5 0%, #8b5cf6 100%)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                服务器网站入口
+              </span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-7 text-[var(--muted)]">
+              在这里选择目标站点，链接、分类、排序和启停状态由后台集中维护。
+            </p>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-4 md:flex-row md:items-center">
+            <label className="relative block w-full md:max-w-md">
+              <Search
+                aria-hidden
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+                size={17}
+              />
+              <span className="sr-only">搜索站点</span>
+              <input
+                className="focus-ring input pl-10"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="搜索名称、描述、URL"
+              />
+            </label>
+
+            <div className="flex flex-1 gap-2 overflow-x-auto pb-1">
+              <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
+                全部
+                <span className="ml-1 text-xs opacity-70">{sites.length}</span>
+              </CategoryChip>
+              {categories.map((item) => {
+                const count = sites.filter((site) => site.categorySlug === item.slug).length;
+                if (!count) return null;
+                return (
+                  <CategoryChip
+                    key={item.id}
+                    active={category === item.slug}
+                    onClick={() => setCategory(item.slug)}
+                  >
+                    {item.name}
+                    <span className="ml-1 text-xs opacity-70">{count}</span>
+                  </CategoryChip>
+                );
+              })}
+              {hasUncategorized ? (
+                <CategoryChip
+                  active={category === "uncategorized"}
+                  onClick={() => setCategory("uncategorized")}
+                >
+                  未分类
+                </CategoryChip>
+              ) : null}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="shell py-7">
-        <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-6 md:flex-row md:items-center md:justify-between">
-          <label className="relative block w-full md:max-w-md">
-            <Search
-              aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-              size={18}
-            />
-            <span className="sr-only">搜索站点</span>
-            <input
-              className="focus-ring w-full rounded-lg border border-[var(--line)] bg-[var(--surface)] py-3 pl-10 pr-4 text-sm shadow-sm"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索名称、描述、URL"
-            />
-          </label>
-
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <CategoryButton active={category === "all"} onClick={() => setCategory("all")}>
-              全部
-            </CategoryButton>
-            {categories.map((item) => (
-              <CategoryButton
-                key={item.id}
-                active={category === item.slug}
-                onClick={() => setCategory(item.slug)}
-              >
-                {item.name}
-              </CategoryButton>
-            ))}
-            {sites.some((site) => !site.categorySlug) ? (
-              <CategoryButton
-                active={category === "uncategorized"}
-                onClick={() => setCategory("uncategorized")}
-              >
-                未分类
-              </CategoryButton>
-            ) : null}
-          </div>
-        </div>
-
+      <section className="shell mt-10">
         {filteredSites.length ? (
-          <div className="grid gap-3 py-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredSites.map((site) => (
-              <a
-                key={site.id}
-                className="group rounded-lg border border-[var(--line)] bg-[var(--surface)] p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[var(--shadow)]"
-                href={`/go/${site.slug}`}
-                rel="noreferrer"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <SiteIcon iconUrl={site.iconUrl} name={site.name} />
-                    <div className="min-w-0">
-                      <h2 className="truncate text-lg font-black">{site.name}</h2>
-                      <p className="truncate text-sm text-[var(--muted)]">{site.url}</p>
-                    </div>
-                  </div>
-                  <ExternalLink
-                    aria-hidden
-                    className="mt-1 shrink-0 text-[var(--muted)] transition group-hover:text-[var(--accent)]"
-                    size={18}
-                  />
-                </div>
-
-                <p className="mt-4 min-h-11 text-sm leading-6 text-[var(--muted)]">
-                  {site.description || "暂无描述"}
-                </p>
-
-                <div className="mt-5 flex items-center justify-between text-xs font-bold uppercase tracking-normal text-[var(--muted)]">
-                  <span>{site.categoryName || "未分类"}</span>
-                  <span>{site.clickCount} 次访问</span>
-                </div>
-              </a>
+              <SiteCard key={site.id} site={site} />
             ))}
           </div>
         ) : (
-          <div className="my-10 rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface)] px-6 py-14 text-center">
-            <h2 className="text-2xl font-black">暂无可访问站点</h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">
-              登录后台添加站点后，启用状态的网站会显示在这里。
+          <div className="card mt-6 px-8 py-16 text-center">
+            <h2 className="text-xl font-semibold">没有匹配的站点</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">
+              {query
+                ? "换一个关键词或者切换分类试试。"
+                : "启用一个站点后，它会出现在这里。"}
             </p>
-            <a className="btn-primary mt-6" href="/admin/sites">
-              添加站点
-            </a>
           </div>
         )}
       </section>
@@ -162,7 +148,39 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
   );
 }
 
-function CategoryButton({
+function SiteCard({ site }: { site: DirectorySite }) {
+  return (
+    <a className="site-card group" href={`/go/${site.slug}`} rel="noreferrer">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} />
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold text-[var(--foreground)]">
+              {site.name}
+            </h2>
+            <p className="mt-0.5 truncate text-xs text-[var(--muted)]">
+              {formatUrl(site.url)}
+            </p>
+          </div>
+        </div>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition group-hover:border-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white">
+          <ArrowUpRight size={15} aria-hidden />
+        </span>
+      </div>
+
+      <p className="mt-4 line-clamp-2 min-h-[2.75rem] text-sm leading-6 text-[var(--muted)]">
+        {site.description || "暂无描述"}
+      </p>
+
+      <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
+        <span className="font-medium">{site.categoryName || "未分类"}</span>
+        <span>{site.clickCount} 次访问</span>
+      </div>
+    </a>
+  );
+}
+
+function CategoryChip({
   active,
   children,
   onClick,
@@ -173,11 +191,7 @@ function CategoryButton({
 }) {
   return (
     <button
-      className={`focus-ring whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-bold transition ${
-        active
-          ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-          : "border-[var(--line)] bg-transparent text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent-strong)]"
-      }`}
+      className={`focus-ring chip ${active ? "active" : ""}`}
       type="button"
       onClick={onClick}
     >
@@ -186,21 +200,11 @@ function CategoryButton({
   );
 }
 
-function SiteIcon({ iconUrl, name }: { iconUrl: string | null; name: string }) {
-  if (iconUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        alt=""
-        className="h-11 w-11 rounded-lg border border-[var(--line)] bg-white object-cover"
-        src={iconUrl}
-      />
-    );
+function formatUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    return parsed.host + (parsed.pathname === "/" ? "" : parsed.pathname);
+  } catch {
+    return url;
   }
-
-  return (
-    <span className="grid h-11 w-11 place-items-center rounded-lg bg-[var(--surface-strong)] text-base font-black text-[var(--accent-strong)]">
-      {name.slice(0, 1).toUpperCase()}
-    </span>
-  );
 }
