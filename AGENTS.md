@@ -14,6 +14,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Authentication: one administrator password, stored as `ADMIN_PASSWORD_HASH`; login session is an HTTP-only signed cookie using `SESSION_SECRET`.
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
 - Production runtime: Docker Compose.
+- Docker image base stage installs `openssl` and `ca-certificates` so Prisma can detect OpenSSL during generate, migration, and runtime.
 - Reverse proxy: Nginx on the host.
 
 ## Repository
