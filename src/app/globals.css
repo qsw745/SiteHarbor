@@ -7,8 +7,10 @@
   --line: #d8d4ca;
   --surface: #fffdf8;
   --surface-strong: #ebe6dc;
+  --surface-muted: #f0ede5;
   --accent: #0f766e;
   --accent-strong: #115e59;
+  --amber: #b7791f;
   --danger: #b42318;
   --shadow: 0 24px 70px rgba(24, 29, 27, 0.08);
 }
@@ -72,6 +74,11 @@ button {
   color: var(--foreground);
   border-radius: 8px;
   padding: 10px 12px;
+}
+
+.admin-field.compact {
+  padding: 8px 10px;
+  font-size: 13px;
 }
 
 .admin-field:focus {
@@ -154,4 +161,104 @@ button {
   border: 1px solid rgba(180, 35, 24, 0.24);
   background: rgba(180, 35, 24, 0.08);
   color: var(--danger);
+}
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--line);
+  background: rgba(251, 250, 246, 0.92);
+  padding: 24px 18px;
+  backdrop-filter: blur(18px);
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  padding: 11px 12px;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-nav-item:hover {
+  background: var(--surface-muted);
+  color: var(--foreground);
+  transform: translateX(2px);
+}
+
+.admin-workspace {
+  min-width: 0;
+}
+
+.admin-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(251, 250, 246, 0.88);
+  padding: 18px 32px;
+  backdrop-filter: blur(18px);
+}
+
+.metric-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.78);
+  padding: 16px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 9px;
+}
+
+.status-pill.active {
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--accent-strong);
+}
+
+.status-pill.inactive {
+  background: rgba(105, 113, 109, 0.14);
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    min-height: auto;
+    gap: 20px;
+  }
+
+  .admin-topbar {
+    padding: 16px;
+  }
 }

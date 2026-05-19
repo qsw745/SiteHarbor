@@ -8,6 +8,8 @@ SiteHarbor is a website aggregation and management portal for a server that host
 
 - Framework: Next.js App Router with TypeScript.
 - UI: Tailwind CSS with a restrained admin-console style.
+- UI design reference: `docs/design/siteharbor-admin-ui-reference.png`.
+- Current admin direction: left sidebar control deck, top command bar, metric panels, site table, right-side add-site editor, and compact public portal preview.
 - Database: Prisma + SQLite.
 - Authentication: one administrator password, stored as `ADMIN_PASSWORD_HASH`; login session is an HTTP-only signed cookie using `SESSION_SECRET`.
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
