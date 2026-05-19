@@ -65,7 +65,7 @@ Initial deployment on the server:
 ssh root@101.37.21.147
 mkdir -p /opt
 cd /opt
-git clone git@github.com:qsw745/SiteHarbor.git siteharbor
+git clone https://github.com/qsw745/SiteHarbor.git siteharbor
 cd /opt/siteharbor
 cp .env.example .env
 npm run hash-password -- "replace-with-admin-password"

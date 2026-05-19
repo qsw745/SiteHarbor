@@ -29,6 +29,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Deploy path: `/opt/siteharbor`
 - Container binding: `127.0.0.1:3000:3000`
 - Nginx domain placeholder: `<PORTAL_DOMAIN>`
+- Server check on 2026-05-19: `nginx` command was not installed, so do not assume Nginx is available until the real domain/proxy choice is confirmed.
 - Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
 
