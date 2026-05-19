@@ -1,4 +1,4 @@
-FROM node:24-bookworm AS deps
+FROM node:24-bookworm-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -6,14 +6,14 @@ COPY prisma ./prisma
 RUN npm ci
 RUN npx prisma generate
 
-FROM node:24-bookworm AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:24-bookworm AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
