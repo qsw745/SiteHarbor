@@ -6,7 +6,7 @@ import {
   updateSiteAction,
 } from "./actions";
 import { SiteAvatar } from "@/components/SiteAvatar";
-import type { Dictionary } from "@/lib/i18n";
+import { format, type Dictionary } from "@/lib/i18n";
 import { getActiveDictionary } from "@/lib/locale";
 import { messageFromParams, resolveMessage } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
@@ -176,7 +176,9 @@ function SiteRow({
           <span className="status-pill neutral">
             {site.category?.name ?? dict.home.uncategorized}
           </span>
-          <span className="hidden sm:inline">{dict.sites.visits(site.clickCount)}</span>
+          <span className="hidden sm:inline">
+            {format(dict.sites.visits, { count: site.clickCount })}
+          </span>
         </div>
       </header>
 

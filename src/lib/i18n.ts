@@ -22,12 +22,15 @@ export type Dictionary = {
     all: string;
     uncategorized: string;
     noDescription: string;
-    visits: (n: number) => string;
+    /** Template with `{{count}}` placeholder. */
+    visits: string;
     emptyTitle: string;
     emptyDescSearch: string;
     emptyDescNone: string;
-    showing: (shown: number, total: number) => string;
-    totalVisits: (n: number) => string;
+    /** Template with `{{shown}}` and `{{total}}` placeholders. */
+    showing: string;
+    /** Template with `{{count}}` placeholder. */
+    totalVisits: string;
   };
 
   nav: {
@@ -53,7 +56,8 @@ export type Dictionary = {
     delete: string;
     statusActive: string;
     statusInactive: string;
-    visits: (n: number) => string;
+    /** Template with `{{count}}` placeholder. */
+    visits: string;
   };
 
   categories: {
@@ -62,8 +66,10 @@ export type Dictionary = {
     addCategory: string;
     add: string;
     existing: string;
-    countCategories: (n: number) => string;
-    countSites: (n: number) => string;
+    /** Template with `{{count}}` placeholder. */
+    countCategories: string;
+    /** Template with `{{count}}` placeholder. */
+    countSites: string;
     empty: string;
     save: string;
     delete: string;
@@ -127,12 +133,12 @@ const zh: Dictionary = {
     all: "全部",
     uncategorized: "未分类",
     noDescription: "暂无描述",
-    visits: (n) => `${n} 次访问`,
+    visits: "{{count}} 次访问",
     emptyTitle: "没有匹配的站点",
     emptyDescSearch: "换一个关键词或者切换分类试试。",
     emptyDescNone: "启用一个站点后，它会出现在这里。",
-    showing: (shown, total) => `展示 ${shown} / ${total} 个站点`,
-    totalVisits: (n) => `累计访问 ${n}`,
+    showing: "展示 {{shown}} / {{total}} 个站点",
+    totalVisits: "累计访问 {{count}}",
   },
 
   nav: {
@@ -158,7 +164,7 @@ const zh: Dictionary = {
     delete: "删除",
     statusActive: "启用",
     statusInactive: "停用",
-    visits: (n) => `${n} 次访问`,
+    visits: "{{count}} 次访问",
   },
 
   categories: {
@@ -167,8 +173,8 @@ const zh: Dictionary = {
     addCategory: "添加分类",
     add: "添加",
     existing: "现有分类",
-    countCategories: (n) => `${n} 个分类`,
-    countSites: (n) => `${n} 个站点`,
+    countCategories: "{{count}} 个分类",
+    countSites: "{{count}} 个站点",
     empty: "还没有分类，站点可以暂时放在「未分类」。",
     save: "保存",
     delete: "删除",
@@ -257,12 +263,12 @@ const en: Dictionary = {
     all: "All",
     uncategorized: "Uncategorised",
     noDescription: "No description yet.",
-    visits: (n) => `${n} visit${n === 1 ? "" : "s"}`,
+    visits: "{{count}} visits",
     emptyTitle: "No sites match",
     emptyDescSearch: "Try a different keyword or switch the category.",
     emptyDescNone: "Enable a site and it will show up here.",
-    showing: (shown, total) => `Showing ${shown} of ${total} sites`,
-    totalVisits: (n) => `${n} total visits`,
+    showing: "Showing {{shown}} of {{total}} sites",
+    totalVisits: "{{count}} total visits",
   },
 
   nav: {
@@ -289,7 +295,7 @@ const en: Dictionary = {
     delete: "Delete",
     statusActive: "Active",
     statusInactive: "Disabled",
-    visits: (n) => `${n} visit${n === 1 ? "" : "s"}`,
+    visits: "{{count}} visits",
   },
 
   categories: {
@@ -299,8 +305,8 @@ const en: Dictionary = {
     addCategory: "Add category",
     add: "Add",
     existing: "Existing categories",
-    countCategories: (n) => `${n} categor${n === 1 ? "y" : "ies"}`,
-    countSites: (n) => `${n} site${n === 1 ? "" : "s"}`,
+    countCategories: "{{count}} categories",
+    countSites: "{{count}} sites",
     empty: "No categories yet. Sites can stay in “Uncategorised”.",
     save: "Save",
     delete: "Delete",
@@ -384,18 +390,24 @@ export function resolveLocale(value: string | undefined | null): Locale {
   return DEFAULT_LOCALE;
 }
 
+/** Substitute `{{name}}` placeholders in a template with a params map. */
+export function format(template: string, params?: Record<string, string | number>): string {
+  if (!params) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) => {
+    const value = params[name];
+    return value === undefined || value === null ? "" : String(value);
+  });
+}
+
 export function translateMessage(
   dict: Dictionary,
   key: string,
-  params?: Record<string, string>,
+  params?: Record<string, string | number>,
 ): string {
   const template = dict.messages[key];
   if (!template) {
     // Fall back to raw key (so missing translations are visible without crashing).
     return key;
   }
-  if (!params) return template;
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
-    params[name] ?? "",
-  );
+  return format(template, params);
 }

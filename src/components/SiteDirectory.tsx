@@ -2,7 +2,7 @@
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SiteAvatar } from "@/components/SiteAvatar";
-import type { Dictionary, Locale } from "@/lib/i18n";
+import { format, type Dictionary, type Locale } from "@/lib/i18n";
 import { ArrowUpRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -161,8 +161,13 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
 
         {filteredSites.length ? (
           <div className="mt-10 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
-            <span>{dict.home.showing(filteredSites.length, sites.length)}</span>
-            <span>{dict.home.totalVisits(totalVisits)}</span>
+            <span>
+              {format(dict.home.showing, {
+                shown: filteredSites.length,
+                total: sites.length,
+              })}
+            </span>
+            <span>{format(dict.home.totalVisits, { count: totalVisits })}</span>
           </div>
         ) : null}
       </section>
@@ -196,7 +201,7 @@ function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
 
       <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
         <span className="font-medium">{site.categoryName || dict.home.uncategorized}</span>
-        <span>{dict.home.visits(site.clickCount)}</span>
+        <span>{format(dict.home.visits, { count: site.clickCount })}</span>
       </div>
     </a>
   );

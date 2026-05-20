@@ -3,7 +3,7 @@ import {
   deleteCategoryAction,
   updateCategoryAction,
 } from "./actions";
-import type { Dictionary } from "@/lib/i18n";
+import { format, type Dictionary } from "@/lib/i18n";
 import { getActiveDictionary } from "@/lib/locale";
 import { messageFromParams, resolveMessage } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
@@ -65,7 +65,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
             {dict.categories.existing}
           </h3>
           <span className="text-xs text-[var(--muted)]">
-            {dict.categories.countCategories(categories.length)}
+            {format(dict.categories.countCategories, { count: categories.length })}
           </span>
         </div>
 
@@ -78,7 +78,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
             >
               <CategoryFields category={category} dict={dict} />
               <div className="text-xs text-[var(--muted)] md:self-center md:pb-1">
-                {dict.categories.countSites(category._count.sites)}
+                {format(dict.categories.countSites, { count: category._count.sites })}
               </div>
               <div className="flex gap-2">
                 <button
