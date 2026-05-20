@@ -49,19 +49,28 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
   }, [category, query, sites]);
 
   const hasUncategorized = sites.some((site) => !site.categorySlug);
+  const totalVisits = sites.reduce((sum, site) => sum + site.clickCount, 0);
 
   return (
-    <main className="min-h-screen pb-20">
-      <section className="pt-16 md:pt-24">
+    <main className="relative min-h-screen pb-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[460px]"
+        style={{
+          background:
+            "radial-gradient(80% 50% at 50% 0%, rgba(99, 102, 241, 0.10), transparent 70%)",
+        }}
+      />
+
+      <section className="pt-14 md:pt-20">
         <div className="shell">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--muted-strong)] shadow-[var(--shadow-sm)]">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-              SiteHarbor
+              SiteHarbor · 站点导航
             </span>
-            <h1 className="mt-6 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-5xl md:leading-[1.1]">
-              统一管理你的
-              <br className="hidden sm:block" />
+            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-[44px] md:leading-[1.1]">
+              统一管理你的{" "}
               <span
                 style={{
                   backgroundImage: "linear-gradient(90deg, #4f46e5 0%, #8b5cf6 100%)",
@@ -73,13 +82,13 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
                 服务器网站入口
               </span>
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-[var(--muted)]">
-              在这里选择目标站点，链接、分类、排序和启停状态由后台集中维护。
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-[var(--muted)]">
+              在这里选择目标站点，链接、分类与启停状态由后台集中维护。
             </p>
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 md:flex-row md:items-center">
-            <label className="relative block w-full md:max-w-md">
+          <div className="mt-8 grid gap-4 md:grid-cols-[minmax(0,360px)_1fr] md:items-center">
+            <label className="relative block w-full">
               <Search
                 aria-hidden
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
@@ -94,10 +103,10 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
               />
             </label>
 
-            <div className="flex flex-1 gap-2 overflow-x-auto pb-1">
+            <div className="flex flex-1 flex-wrap gap-2 md:justify-end">
               <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
                 全部
-                <span className="ml-1 text-xs opacity-70">{sites.length}</span>
+                <Counter>{sites.length}</Counter>
               </CategoryChip>
               {categories.map((item) => {
                 const count = sites.filter((site) => site.categorySlug === item.slug).length;
@@ -109,7 +118,7 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
                     onClick={() => setCategory(item.slug)}
                   >
                     {item.name}
-                    <span className="ml-1 text-xs opacity-70">{count}</span>
+                    <Counter>{count}</Counter>
                   </CategoryChip>
                 );
               })}
@@ -143,6 +152,15 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
             </p>
           </div>
         )}
+
+        {filteredSites.length ? (
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
+            <span>
+              展示 {filteredSites.length} / {sites.length} 个站点
+            </span>
+            <span>累计访问 {totalVisits}</span>
+          </div>
+        ) : null}
       </section>
     </main>
   );
@@ -197,6 +215,14 @@ function CategoryChip({
     >
       {children}
     </button>
+  );
+}
+
+function Counter({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ml-0.5 inline-flex min-w-[18px] items-center justify-center rounded-full bg-black/10 px-1.5 py-px text-[10.5px] font-medium tabular-nums">
+      {children}
+    </span>
   );
 }
 

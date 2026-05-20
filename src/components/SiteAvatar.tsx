@@ -37,13 +37,12 @@ export function SiteAvatar({
   slug,
   size = "md",
 }: {
-  iconUrl: string | null;
+  iconUrl?: string | null;
   name: string;
   slug: string;
   size?: Size;
 }) {
-  const [errored, setErrored] = useState(false);
-  const showImage = Boolean(iconUrl) && !errored;
+  const [loaded, setLoaded] = useState(false);
   const gradient = pickGradient(slug || name || "x");
   const letter = (name.trim().slice(0, 1) || "?").toUpperCase();
 
@@ -59,13 +58,21 @@ export function SiteAvatar({
       >
         {letter}
       </span>
-      {showImage ? (
+      {iconUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           alt=""
-          className="absolute inset-0 h-full w-full bg-white object-cover"
-          src={iconUrl as string}
-          onError={() => setErrored(true)}
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
+          style={{ opacity: loaded ? 1 : 0, background: "white" }}
+          src={iconUrl}
+          onLoad={(event) => {
+            const target = event.currentTarget;
+            if (target.naturalWidth >= 16 && target.naturalHeight >= 16) {
+              setLoaded(true);
+            }
+          }}
+          onError={() => setLoaded(false)}
         />
       ) : null}
     </span>

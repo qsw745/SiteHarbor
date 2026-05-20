@@ -12,7 +12,7 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <main className="admin-shell min-h-screen">
+    <main className="admin-shell">
       <aside className="admin-sidebar">
         <div className="grid gap-7">
           <Link className="flex items-center gap-2.5" href="/admin/sites">
