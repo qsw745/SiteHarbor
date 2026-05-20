@@ -25,7 +25,7 @@ export function LoginForm({
 }) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
 
-  const errorText = state.error ? (messages[state.error]?.() ?? state.error) : "";
+  const errorText = state.error ? (messages[state.error] ?? state.error) : "";
 
   return (
     <form action={formAction} className="mt-8 grid gap-4">

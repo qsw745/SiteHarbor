@@ -34,3 +34,6 @@ pnpm-debug.log*
 coverage
 .vercel
 tsconfig.tsbuildinfo
+
+# claude code session state
+.claude/

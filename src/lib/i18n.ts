@@ -101,8 +101,12 @@ export type Dictionary = {
     description: string;
   };
 
-  /** Server-action result messages. Resolved from a key carried in the query string. */
-  messages: Record<string, (params?: Record<string, string>) => string>;
+  /**
+   * Server-action result messages. Values may contain `{{name}}` placeholders that
+   * are substituted from the URL query string by `resolveMessage`. Plain strings
+   * (no functions) so the dictionary can be passed to client components.
+   */
+  messages: Record<string, string>;
 };
 
 const zh: Dictionary = {
@@ -203,35 +207,34 @@ const zh: Dictionary = {
   },
 
   messages: {
-    "site-created": () => "站点已添加。",
-    "site-updated": () => "站点已保存。",
-    "site-enabled": () => "站点已启用。",
-    "site-disabled": () => "站点已停用。",
-    "site-deleted": () => "站点已删除。",
-    "category-created": () => "分类已添加。",
-    "category-updated": () => "分类已保存。",
-    "category-deleted": () => "分类已删除，原站点会变为未分类。",
-    "discovery-synced": (p) =>
-      `已同步 ${p?.created ?? 0} 个新站点，更新 ${p?.updated ?? 0} 个已有站点。`,
-    "err-slug-taken": () => "站点 Slug 已存在，请换一个。",
-    "err-site-not-found": () => "站点不存在。",
-    "err-category-conflict": () => "分类名称或 Slug 已存在。",
-    "err-discovery-empty": () => "没有发现可导入的网站，请确认服务器已挂载 Nginx 配置目录。",
-    "err-form-invalid": () => "表单内容无效。",
-    "err-password-required": () => "请输入管理员密码。",
-    "err-password-invalid": () => "密码不正确，或服务器还没有配置 ADMIN_PASSWORD_HASH。",
-    "err-name-required": () => "站点名称不能为空。",
-    "err-name-too-long": () => "站点名称最长 80 个字符。",
-    "err-category-name-required": () => "分类名称不能为空。",
-    "err-category-name-too-long": () => "分类名称最长 60 个字符。",
-    "err-slug-required": () => "Slug 不能为空。",
-    "err-slug-too-long": () => "Slug 最长 80 个字符。",
-    "err-slug-format": () => "Slug 只能包含小写字母、数字和短横线。",
-    "err-url-invalid": () => "请输入有效的 URL。",
-    "err-url-protocol": () => "URL 必须以 http:// 或 https:// 开头。",
-    "err-icon-url-invalid": () => "图标 URL 必须是有效的 http(s) 地址。",
-    "err-desc-too-long": () => "描述最长 240 个字符。",
-    "err-sort-order-range": () => "排序值应在 0 到 99999 之间。",
+    "site-created": "站点已添加。",
+    "site-updated": "站点已保存。",
+    "site-enabled": "站点已启用。",
+    "site-disabled": "站点已停用。",
+    "site-deleted": "站点已删除。",
+    "category-created": "分类已添加。",
+    "category-updated": "分类已保存。",
+    "category-deleted": "分类已删除，原站点会变为未分类。",
+    "discovery-synced": "已同步 {{created}} 个新站点，更新 {{updated}} 个已有站点。",
+    "err-slug-taken": "站点 Slug 已存在，请换一个。",
+    "err-site-not-found": "站点不存在。",
+    "err-category-conflict": "分类名称或 Slug 已存在。",
+    "err-discovery-empty": "没有发现可导入的网站，请确认服务器已挂载 Nginx 配置目录。",
+    "err-form-invalid": "表单内容无效。",
+    "err-password-required": "请输入管理员密码。",
+    "err-password-invalid": "密码不正确，或服务器还没有配置 ADMIN_PASSWORD_HASH。",
+    "err-name-required": "站点名称不能为空。",
+    "err-name-too-long": "站点名称最长 80 个字符。",
+    "err-category-name-required": "分类名称不能为空。",
+    "err-category-name-too-long": "分类名称最长 60 个字符。",
+    "err-slug-required": "Slug 不能为空。",
+    "err-slug-too-long": "Slug 最长 80 个字符。",
+    "err-slug-format": "Slug 只能包含小写字母、数字和短横线。",
+    "err-url-invalid": "请输入有效的 URL。",
+    "err-url-protocol": "URL 必须以 http:// 或 https:// 开头。",
+    "err-icon-url-invalid": "图标 URL 必须是有效的 http(s) 地址。",
+    "err-desc-too-long": "描述最长 240 个字符。",
+    "err-sort-order-range": "排序值应在 0 到 99999 之间。",
   },
 };
 
@@ -336,37 +339,37 @@ const en: Dictionary = {
   },
 
   messages: {
-    "site-created": () => "Site added.",
-    "site-updated": () => "Site saved.",
-    "site-enabled": () => "Site enabled.",
-    "site-disabled": () => "Site disabled.",
-    "site-deleted": () => "Site deleted.",
-    "category-created": () => "Category added.",
-    "category-updated": () => "Category saved.",
-    "category-deleted": () => "Category deleted. Its sites are now uncategorised.",
-    "discovery-synced": (p) =>
-      `Synced ${p?.created ?? 0} new site(s) and updated ${p?.updated ?? 0} existing one(s).`,
-    "err-slug-taken": () => "That site slug already exists. Choose another.",
-    "err-site-not-found": () => "Site not found.",
-    "err-category-conflict": () => "Category name or slug already exists.",
-    "err-discovery-empty": () =>
+    "site-created": "Site added.",
+    "site-updated": "Site saved.",
+    "site-enabled": "Site enabled.",
+    "site-disabled": "Site disabled.",
+    "site-deleted": "Site deleted.",
+    "category-created": "Category added.",
+    "category-updated": "Category saved.",
+    "category-deleted": "Category deleted. Its sites are now uncategorised.",
+    "discovery-synced":
+      "Synced {{created}} new site(s) and updated {{updated}} existing one(s).",
+    "err-slug-taken": "That site slug already exists. Choose another.",
+    "err-site-not-found": "Site not found.",
+    "err-category-conflict": "Category name or slug already exists.",
+    "err-discovery-empty":
       "No sites discovered. Make sure the Nginx config directory is mounted.",
-    "err-form-invalid": () => "Form input is invalid.",
-    "err-password-required": () => "Please enter the admin password.",
-    "err-password-invalid": () =>
+    "err-form-invalid": "Form input is invalid.",
+    "err-password-required": "Please enter the admin password.",
+    "err-password-invalid":
       "Incorrect password, or ADMIN_PASSWORD_HASH has not been configured on the server.",
-    "err-name-required": () => "Name is required.",
-    "err-name-too-long": () => "Name must be 80 characters or fewer.",
-    "err-category-name-required": () => "Category name is required.",
-    "err-category-name-too-long": () => "Category name must be 60 characters or fewer.",
-    "err-slug-required": () => "Slug is required.",
-    "err-slug-too-long": () => "Slug must be 80 characters or fewer.",
-    "err-slug-format": () => "Slug may only contain lowercase letters, digits and dashes.",
-    "err-url-invalid": () => "Please enter a valid URL.",
-    "err-url-protocol": () => "URL must start with http:// or https://.",
-    "err-icon-url-invalid": () => "Icon URL must be a valid http(s) URL.",
-    "err-desc-too-long": () => "Description must be 240 characters or fewer.",
-    "err-sort-order-range": () => "Sort order must be between 0 and 99999.",
+    "err-name-required": "Name is required.",
+    "err-name-too-long": "Name must be 80 characters or fewer.",
+    "err-category-name-required": "Category name is required.",
+    "err-category-name-too-long": "Category name must be 60 characters or fewer.",
+    "err-slug-required": "Slug is required.",
+    "err-slug-too-long": "Slug must be 80 characters or fewer.",
+    "err-slug-format": "Slug may only contain lowercase letters, digits and dashes.",
+    "err-url-invalid": "Please enter a valid URL.",
+    "err-url-protocol": "URL must start with http:// or https://.",
+    "err-icon-url-invalid": "Icon URL must be a valid http(s) URL.",
+    "err-desc-too-long": "Description must be 240 characters or fewer.",
+    "err-sort-order-range": "Sort order must be between 0 and 99999.",
   },
 };
 
@@ -386,8 +389,13 @@ export function translateMessage(
   key: string,
   params?: Record<string, string>,
 ): string {
-  const resolver = dict.messages[key];
-  if (resolver) return resolver(params);
-  // Fall back to raw key (so missing translations are visible without crashing).
-  return key;
+  const template = dict.messages[key];
+  if (!template) {
+    // Fall back to raw key (so missing translations are visible without crashing).
+    return key;
+  }
+  if (!params) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
+    params[name] ?? "",
+  );
 }
