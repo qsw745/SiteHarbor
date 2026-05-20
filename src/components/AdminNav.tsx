@@ -4,17 +4,22 @@ import { FolderKanban, Tags } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navItems = [
-  { href: "/admin/sites", label: "站点", icon: FolderKanban },
-  { href: "/admin/categories", label: "分类", icon: Tags },
-];
+type Labels = {
+  sites: string;
+  categories: string;
+};
 
-export function AdminNav() {
+export function AdminNav({ labels }: { labels: Labels }) {
   const pathname = usePathname();
+
+  const items = [
+    { href: "/admin/sites", label: labels.sites, icon: FolderKanban },
+    { href: "/admin/categories", label: labels.categories, icon: Tags },
+  ];
 
   return (
     <nav className="grid gap-1">
-      {navItems.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (

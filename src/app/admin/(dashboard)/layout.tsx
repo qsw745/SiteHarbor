@@ -1,5 +1,7 @@
 import { logoutAction } from "@/app/admin/actions";
 import { AdminNav } from "@/components/AdminNav";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getActiveDictionary } from "@/lib/locale";
 import { requireAdmin } from "@/lib/session";
 import { ExternalLink, LogOut } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +12,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   await requireAdmin();
+  const { dict, locale } = await getActiveDictionary();
 
   return (
     <main className="admin-shell">
@@ -26,19 +29,19 @@ export default async function AdminLayout({
             </span>
             <div>
               <span className="block text-base font-semibold tracking-tight">
-                SiteHarbor
+                {dict.brand}
               </span>
-              <span className="block text-xs text-[var(--muted)]">控制台</span>
+              <span className="block text-xs text-[var(--muted)]">{dict.console}</span>
             </div>
           </Link>
 
-          <AdminNav />
+          <AdminNav labels={{ sites: dict.nav.sites, categories: dict.nav.categories }} />
         </div>
 
         <form action={logoutAction}>
           <button className="btn-ghost w-full justify-start" type="submit">
             <LogOut size={16} aria-hidden />
-            退出登录
+            {dict.signOut}
           </button>
         </form>
       </aside>
@@ -46,13 +49,18 @@ export default async function AdminLayout({
       <section className="admin-workspace">
         <header className="admin-topbar">
           <div>
-            <p className="text-xs font-medium text-[var(--muted)]">控制台</p>
-            <h1 className="mt-0.5 text-lg font-semibold tracking-tight">网站管理</h1>
+            <p className="text-xs font-medium text-[var(--muted)]">{dict.console}</p>
+            <h1 className="mt-0.5 text-lg font-semibold tracking-tight">
+              {dict.siteManagement}
+            </h1>
           </div>
-          <Link className="btn-secondary" href="/" target="_blank">
-            <ExternalLink size={15} aria-hidden />
-            查看首页
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher current={locale} />
+            <Link className="btn-secondary" href="/" target="_blank">
+              <ExternalLink size={15} aria-hidden />
+              {dict.viewHomepage}
+            </Link>
+          </div>
         </header>
 
         <div className="px-6 py-7 lg:px-8">{children}</div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { getActiveDictionary } from "@/lib/locale";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,18 +9,22 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-export const metadata: Metadata = {
-  title: "SiteHarbor",
-  description: "统一管理你的服务器网站入口。",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict } = await getActiveDictionary();
+  return {
+    title: dict.metadata.title,
+    description: dict.metadata.description,
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { locale } = await getActiveDictionary();
   return (
-    <html lang="zh-CN" className={inter.variable}>
+    <html lang={locale === "zh" ? "zh-CN" : "en"} className={inter.variable}>
       <body>{children}</body>
     </html>
   );

@@ -1,6 +1,8 @@
 "use client";
 
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SiteAvatar } from "@/components/SiteAvatar";
+import type { Dictionary, Locale } from "@/lib/i18n";
 import { ArrowUpRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -25,9 +27,11 @@ export type DirectorySite = {
 type SiteDirectoryProps = {
   categories: DirectoryCategory[];
   sites: DirectorySite[];
+  dict: Dictionary;
+  locale: Locale;
 };
 
-export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
+export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectoryProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
 
@@ -62,15 +66,19 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
         }}
       />
 
-      <section className="pt-14 md:pt-20">
+      <div className="shell flex justify-end pt-6">
+        <LanguageSwitcher current={locale} />
+      </div>
+
+      <section className="pt-6 md:pt-10">
         <div className="shell">
           <div className="max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--muted-strong)] shadow-[var(--shadow-sm)]">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-              SiteHarbor · 站点导航
+              {dict.brandTag}
             </span>
             <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-[44px] md:leading-[1.1]">
-              统一管理你的{" "}
+              {dict.home.titleBefore}{" "}
               <span
                 style={{
                   backgroundImage: "linear-gradient(90deg, #4f46e5 0%, #8b5cf6 100%)",
@@ -79,11 +87,11 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
                   color: "transparent",
                 }}
               >
-                服务器网站入口
+                {dict.home.titleHighlight}
               </span>
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-[var(--muted)]">
-              在这里选择目标站点，链接、分类与启停状态由后台集中维护。
+              {dict.home.subtitle}
             </p>
           </div>
 
@@ -94,18 +102,18 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
                 size={17}
               />
-              <span className="sr-only">搜索站点</span>
+              <span className="sr-only">{dict.home.searchPlaceholder}</span>
               <input
                 className="focus-ring input pl-10"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="搜索名称、描述、URL"
+                placeholder={dict.home.searchPlaceholder}
               />
             </label>
 
             <div className="flex flex-1 flex-wrap gap-2 md:justify-end">
               <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
-                全部
+                {dict.home.all}
                 <Counter>{sites.length}</Counter>
               </CategoryChip>
               {categories.map((item) => {
@@ -127,7 +135,7 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
                   active={category === "uncategorized"}
                   onClick={() => setCategory("uncategorized")}
                 >
-                  未分类
+                  {dict.home.uncategorized}
                 </CategoryChip>
               ) : null}
             </div>
@@ -139,26 +147,22 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
         {filteredSites.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredSites.map((site) => (
-              <SiteCard key={site.id} site={site} />
+              <SiteCard key={site.id} site={site} dict={dict} />
             ))}
           </div>
         ) : (
           <div className="card mt-6 px-8 py-16 text-center">
-            <h2 className="text-xl font-semibold">没有匹配的站点</h2>
+            <h2 className="text-xl font-semibold">{dict.home.emptyTitle}</h2>
             <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">
-              {query
-                ? "换一个关键词或者切换分类试试。"
-                : "启用一个站点后，它会出现在这里。"}
+              {query ? dict.home.emptyDescSearch : dict.home.emptyDescNone}
             </p>
           </div>
         )}
 
         {filteredSites.length ? (
           <div className="mt-10 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
-            <span>
-              展示 {filteredSites.length} / {sites.length} 个站点
-            </span>
-            <span>累计访问 {totalVisits}</span>
+            <span>{dict.home.showing(filteredSites.length, sites.length)}</span>
+            <span>{dict.home.totalVisits(totalVisits)}</span>
           </div>
         ) : null}
       </section>
@@ -166,7 +170,7 @@ export function SiteDirectory({ categories, sites }: SiteDirectoryProps) {
   );
 }
 
-function SiteCard({ site }: { site: DirectorySite }) {
+function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
   return (
     <a className="site-card group" href={`/go/${site.slug}`} rel="noreferrer">
       <div className="flex items-start justify-between gap-3">
@@ -187,12 +191,12 @@ function SiteCard({ site }: { site: DirectorySite }) {
       </div>
 
       <p className="mt-4 line-clamp-2 min-h-[2.75rem] text-sm leading-6 text-[var(--muted)]">
-        {site.description || "暂无描述"}
+        {site.description || dict.home.noDescription}
       </p>
 
       <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
-        <span className="font-medium">{site.categoryName || "未分类"}</span>
-        <span>{site.clickCount} 次访问</span>
+        <span className="font-medium">{site.categoryName || dict.home.uncategorized}</span>
+        <span>{dict.home.visits(site.clickCount)}</span>
       </div>
     </a>
   );

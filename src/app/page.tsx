@@ -1,10 +1,12 @@
 import { SiteDirectory } from "@/components/SiteDirectory";
+import { getActiveDictionary } from "@/lib/locale";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [categories, sites] = await Promise.all([
+  const [{ dict, locale }, categories, sites] = await Promise.all([
+    getActiveDictionary(),
     prisma.category.findMany({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       select: {
@@ -36,6 +38,8 @@ export default async function HomePage() {
 
   return (
     <SiteDirectory
+      dict={dict}
+      locale={locale}
       categories={categories}
       sites={sites.map((site) => ({
         id: site.id,

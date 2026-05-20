@@ -3,11 +3,11 @@ import { z } from "zod";
 const httpUrl = z
   .string()
   .trim()
-  .url("请输入有效 URL")
+  .url("err-url-invalid")
   .refine((value) => {
     const protocol = new URL(value).protocol;
     return protocol === "http:" || protocol === "https:";
-  }, "URL 必须以 http:// 或 https:// 开头");
+  }, "err-url-protocol");
 
 const optionalHttpUrl = z
   .string()
@@ -20,28 +20,32 @@ const optionalHttpUrl = z
     if (!parsed.success) return false;
     const protocol = new URL(value).protocol;
     return protocol === "http:" || protocol === "https:";
-  }, "图标 URL 必须是有效的 http(s) 地址");
+  }, "err-icon-url-invalid");
 
 export const slugSchema = z
   .string()
   .trim()
-  .min(1, "Slug 不能为空")
-  .max(80, "Slug 最长 80 个字符")
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 只能包含小写字母、数字和短横线");
+  .min(1, "err-slug-required")
+  .max(80, "err-slug-too-long")
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "err-slug-format");
 
 export const siteFormSchema = z.object({
-  name: z.string().trim().min(1, "站点名称不能为空").max(80),
+  name: z
+    .string()
+    .trim()
+    .min(1, "err-name-required")
+    .max(80, "err-name-too-long"),
   slug: slugSchema,
   url: httpUrl,
   description: z
     .string()
     .trim()
-    .max(240, "描述最长 240 个字符")
+    .max(240, "err-desc-too-long")
     .optional()
     .transform((value) => value || null),
   iconUrl: optionalHttpUrl,
   active: z.enum(["true", "false"]).transform((value) => value === "true"),
-  sortOrder: z.coerce.number().int().min(0).max(99999),
+  sortOrder: z.coerce.number().int().min(0, "err-sort-order-range").max(99999, "err-sort-order-range"),
   categoryId: z
     .string()
     .trim()
@@ -50,9 +54,13 @@ export const siteFormSchema = z.object({
 });
 
 export const categoryFormSchema = z.object({
-  name: z.string().trim().min(1, "分类名称不能为空").max(60),
+  name: z
+    .string()
+    .trim()
+    .min(1, "err-category-name-required")
+    .max(60, "err-category-name-too-long"),
   slug: slugSchema,
-  sortOrder: z.coerce.number().int().min(0).max(99999),
+  sortOrder: z.coerce.number().int().min(0, "err-sort-order-range").max(99999, "err-sort-order-range"),
 });
 
 export function formString(formData: FormData, key: string) {
@@ -61,5 +69,5 @@ export function formString(formData: FormData, key: string) {
 }
 
 export function firstZodError(error: z.ZodError) {
-  return error.issues[0]?.message ?? "表单内容无效";
+  return error.issues[0]?.message ?? "err-form-invalid";
 }

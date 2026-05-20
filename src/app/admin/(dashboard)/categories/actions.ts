@@ -42,7 +42,7 @@ export async function createCategoryAction(formData: FormData) {
     });
   } catch (error) {
     if (isUniqueConstraint(error)) {
-      redirectToCategories({ error: "分类名称或 Slug 已存在。" });
+      redirectToCategories({ error: "err-category-conflict" });
     }
     throw error;
   }
@@ -65,7 +65,7 @@ export async function updateCategoryAction(id: string, formData: FormData) {
     });
   } catch (error) {
     if (isUniqueConstraint(error)) {
-      redirectToCategories({ error: "分类名称或 Slug 已存在。" });
+      redirectToCategories({ error: "err-category-conflict" });
     }
     throw error;
   }

@@ -48,7 +48,7 @@ export async function createSiteAction(formData: FormData) {
     });
   } catch (error) {
     if (isUniqueConstraint(error)) {
-      redirectToSites({ error: "站点 Slug 已存在，请换一个。" });
+      redirectToSites({ error: "err-slug-taken" });
     }
     throw error;
   }
@@ -71,7 +71,7 @@ export async function updateSiteAction(id: string, formData: FormData) {
     });
   } catch (error) {
     if (isUniqueConstraint(error)) {
-      redirectToSites({ error: "站点 Slug 已存在，请换一个。" });
+      redirectToSites({ error: "err-slug-taken" });
     }
     throw error;
   }
@@ -88,7 +88,7 @@ export async function toggleSiteAction(id: string) {
   });
 
   if (!site) {
-    redirectToSites({ error: "站点不存在。" });
+    redirectToSites({ error: "err-site-not-found" });
   }
 
   await prisma.site.update({
@@ -115,9 +115,7 @@ export async function syncDiscoveredSitesAction() {
   const discoveredSites = await discoverServerSites();
 
   if (!discoveredSites.length) {
-    redirectToSites({
-      error: "没有发现可导入的网站。请确认服务器已挂载 Nginx 配置目录。",
-    });
+    redirectToSites({ error: "err-discovery-empty" });
   }
 
   const category = await prisma.category.upsert({
@@ -184,7 +182,11 @@ export async function syncDiscoveredSitesAction() {
   }
 
   revalidatePath("/");
-  redirectToSites({ ok: `已同步 ${created} 个新站点，更新 ${updated} 个已有站点。` });
+  redirectToSites({
+    ok: "discovery-synced",
+    created: String(created),
+    updated: String(updated),
+  });
 }
 
 function canonicalUrl(value: string) {

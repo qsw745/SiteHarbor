@@ -15,12 +15,12 @@ export async function loginAction(
   const password = formData.get("password");
 
   if (typeof password !== "string" || password.length === 0) {
-    return { error: "请输入管理员密码。" };
+    return { error: "err-password-required" };
   }
 
   const valid = await verifyAdminPassword(password);
   if (!valid) {
-    return { error: "密码不正确，或服务器还没有配置 ADMIN_PASSWORD_HASH。" };
+    return { error: "err-password-invalid" };
   }
 
   await createAdminSession();

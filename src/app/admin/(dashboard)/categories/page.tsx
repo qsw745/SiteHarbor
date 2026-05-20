@@ -3,17 +3,13 @@ import {
   deleteCategoryAction,
   updateCategoryAction,
 } from "./actions";
-import { messageFromParams } from "@/lib/messages";
+import type { Dictionary } from "@/lib/i18n";
+import { getActiveDictionary } from "@/lib/locale";
+import { messageFromParams, resolveMessage } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 import { Plus, Save, Tags, Trash2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-const okMessages: Record<string, string> = {
-  "category-created": "分类已添加。",
-  "category-updated": "分类已保存。",
-  "category-deleted": "分类已删除，原站点会变为未分类。",
-};
 
 type CategoriesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -22,42 +18,43 @@ type CategoriesPageProps = {
 export default async function CategoriesPage({ searchParams }: CategoriesPageProps) {
   const params = await searchParams;
   const { error, ok } = messageFromParams(params);
-  const categories = await prisma.category.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: {
-      _count: {
-        select: {
-          sites: true,
+  const [{ dict }, categories] = await Promise.all([
+    getActiveDictionary(),
+    prisma.category.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: {
+        _count: {
+          select: {
+            sites: true,
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   return (
     <div className="grid gap-6">
       <section className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold tracking-tight">分类管理</h2>
-        <p className="text-sm text-[var(--muted)]">
-          分类用于首页筛选，删除分类不会删除站点（站点会变为未分类）。
-        </p>
+        <h2 className="text-2xl font-semibold tracking-tight">{dict.categories.title}</h2>
+        <p className="text-sm text-[var(--muted)]">{dict.categories.subtitle}</p>
       </section>
 
-      {error ? <div className="message-error">{error}</div> : null}
-      {ok ? <div className="message-ok">{okMessages[ok] ?? "操作已完成。"}</div> : null}
+      {error ? <div className="message-error">{resolveMessage(dict, error, params)}</div> : null}
+      {ok ? <div className="message-ok">{resolveMessage(dict, ok, params)}</div> : null}
 
       <section className="card p-5">
         <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-          <h3 className="text-base font-semibold">添加分类</h3>
+          <h3 className="text-base font-semibold">{dict.categories.addCategory}</h3>
           <Tags size={16} className="text-[var(--muted)]" aria-hidden />
         </div>
         <form
           action={createCategoryAction}
           className="mt-4 grid gap-3 md:grid-cols-[1.2fr_1.2fr_120px_auto]"
         >
-          <CategoryFields />
+          <CategoryFields dict={dict} />
           <button className="btn-primary self-end" type="submit">
             <Plus size={15} aria-hidden />
-            添加
+            {dict.categories.add}
           </button>
         </form>
       </section>
@@ -65,9 +62,11 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
       <section className="grid gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium uppercase tracking-wider text-[var(--muted)]">
-            现有分类
+            {dict.categories.existing}
           </h3>
-          <span className="text-xs text-[var(--muted)]">{categories.length} 个分类</span>
+          <span className="text-xs text-[var(--muted)]">
+            {dict.categories.countCategories(categories.length)}
+          </span>
         </div>
 
         {categories.length ? (
@@ -77,9 +76,9 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
               className="card grid gap-3 p-5 md:grid-cols-[1.2fr_1.2fr_120px_auto_auto] md:items-end"
               key={category.id}
             >
-              <CategoryFields category={category} />
+              <CategoryFields category={category} dict={dict} />
               <div className="text-xs text-[var(--muted)] md:self-center md:pb-1">
-                {category._count.sites} 个站点
+                {dict.categories.countSites(category._count.sites)}
               </div>
               <div className="flex gap-2">
                 <button
@@ -89,18 +88,18 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
                   type="submit"
                 >
                   <Trash2 size={15} aria-hidden />
-                  删除
+                  {dict.categories.delete}
                 </button>
                 <button className="btn-primary" type="submit">
                   <Save size={15} aria-hidden />
-                  保存
+                  {dict.categories.save}
                 </button>
               </div>
             </form>
           ))
         ) : (
           <div className="card px-8 py-12 text-center text-sm text-[var(--muted)]">
-            还没有分类，站点可以暂时放在「未分类」。
+            {dict.categories.empty}
           </div>
         )}
       </section>
@@ -114,24 +113,30 @@ type CategoryFieldCategory = {
   sortOrder: number;
 };
 
-function CategoryFields({ category }: { category?: CategoryFieldCategory }) {
+function CategoryFields({
+  category,
+  dict,
+}: {
+  category?: CategoryFieldCategory;
+  dict: Dictionary;
+}) {
   return (
     <>
       <label className="admin-label">
-        名称
+        {dict.fields.name}
         <input className="admin-field" defaultValue={category?.name} name="name" required />
       </label>
       <label className="admin-label">
-        Slug
+        {dict.fields.slug}
         <input
           className="admin-field"
           defaultValue={category?.slug}
           name="slug"
-          placeholder="留空时按名称自动生成"
+          placeholder={dict.fields.slugFromNamePlaceholder}
         />
       </label>
       <label className="admin-label">
-        排序
+        {dict.fields.sortOrder}
         <input
           className="admin-field"
           defaultValue={category?.sortOrder ?? 0}

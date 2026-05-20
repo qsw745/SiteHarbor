@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dictionary } from "@/lib/i18n";
 import { LogIn } from "lucide-react";
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "./actions";
@@ -8,27 +9,42 @@ const initialState: LoginState = {
   error: "",
 };
 
-export function LoginForm() {
+type Labels = {
+  passwordLabel: string;
+  passwordPlaceholder: string;
+  submit: string;
+  submitting: string;
+};
+
+export function LoginForm({
+  labels,
+  messages,
+}: {
+  labels: Labels;
+  messages: Dictionary["messages"];
+}) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+
+  const errorText = state.error ? (messages[state.error]?.() ?? state.error) : "";
 
   return (
     <form action={formAction} className="mt-8 grid gap-4">
       <label className="admin-label">
-        管理员密码
+        {labels.passwordLabel}
         <input
           autoComplete="current-password"
           className="admin-field"
           name="password"
-          placeholder="输入管理员密码"
+          placeholder={labels.passwordPlaceholder}
           type="password"
         />
       </label>
 
-      {state.error ? <div className="message-error">{state.error}</div> : null}
+      {errorText ? <div className="message-error">{errorText}</div> : null}
 
       <button className="btn-primary" disabled={pending} type="submit">
         <LogIn size={15} aria-hidden />
-        {pending ? "登录中" : "登录后台"}
+        {pending ? labels.submitting : labels.submit}
       </button>
     </form>
   );
