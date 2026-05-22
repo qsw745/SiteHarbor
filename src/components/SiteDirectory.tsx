@@ -3,7 +3,7 @@
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SiteAvatar } from "@/components/SiteAvatar";
 import { format, type Dictionary, type Locale } from "@/lib/i18n";
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, Eye, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export type DirectoryCategory = {
@@ -54,15 +54,18 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
 
   const hasUncategorized = sites.some((site) => !site.categorySlug);
   const totalVisits = sites.reduce((sum, site) => sum + site.clickCount, 0);
+  const usedCategoryCount = categories.filter((item) =>
+    sites.some((site) => site.categorySlug === item.slug),
+  ).length + (hasUncategorized ? 1 : 0);
 
   return (
-    <main className="relative min-h-screen pb-24">
+    <main className="relative flex min-h-screen flex-col pb-12">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[460px]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px]"
         style={{
           background:
-            "radial-gradient(80% 50% at 50% 0%, rgba(99, 102, 241, 0.10), transparent 70%)",
+            "radial-gradient(80% 50% at 50% 0%, rgba(99, 102, 241, 0.12), transparent 70%)",
         }}
       />
 
@@ -93,6 +96,12 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-[var(--muted)]">
               {dict.home.subtitle}
             </p>
+          </div>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <StatTile label={dict.home.statSites} value={sites.length} />
+            <StatTile label={dict.home.statCategories} value={usedCategoryCount} />
+            <StatTile label={dict.home.statVisits} value={totalVisits} />
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-[minmax(0,360px)_1fr] md:items-center">
@@ -143,7 +152,7 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
         </div>
       </section>
 
-      <section className="shell mt-10">
+      <section className="shell mt-10 flex-1">
         {filteredSites.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredSites.map((site) => (
@@ -171,11 +180,30 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
           </div>
         ) : null}
       </section>
+
+      <footer className="shell mt-16 flex flex-col items-start justify-between gap-2 border-t border-[var(--line)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center">
+        <span>{format(dict.home.footer.copyright, { year: new Date().getFullYear() })}</span>
+        <span>{dict.home.footer.tagline}</span>
+      </footer>
     </main>
   );
 }
 
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-sm)]">
+      <div className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
+        {value.toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
 function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
+  const categoryLabel = site.categoryName || dict.home.uncategorized;
   return (
     <a className="site-card group" href={`/go/${site.slug}`} rel="noreferrer">
       <div className="flex items-start justify-between gap-3">
@@ -195,13 +223,19 @@ function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
         </span>
       </div>
 
-      <p className="mt-4 line-clamp-2 min-h-[2.75rem] text-sm leading-6 text-[var(--muted)]">
+      <p className="mt-4 line-clamp-3 min-h-[4.25rem] text-sm leading-6 text-[var(--muted)]">
         {site.description || dict.home.noDescription}
       </p>
 
-      <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
-        <span className="font-medium">{site.categoryName || dict.home.uncategorized}</span>
-        <span>{format(dict.home.visits, { count: site.clickCount })}</span>
+      <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs">
+        <span className="inline-flex items-center rounded-full bg-[var(--surface-muted)] px-2.5 py-1 font-medium text-[var(--muted-strong)]">
+          {categoryLabel}
+        </span>
+        <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-[var(--muted-strong)]">
+          <Eye size={13} aria-hidden />
+          {site.clickCount.toLocaleString()}
+          <span className="sr-only">{dict.home.visitCardLabel}</span>
+        </span>
       </div>
     </a>
   );

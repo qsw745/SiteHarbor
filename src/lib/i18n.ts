@@ -31,6 +31,16 @@ export type Dictionary = {
     showing: string;
     /** Template with `{{count}}` placeholder. */
     totalVisits: string;
+    /** Stat tile labels in the hero. */
+    statSites: string;
+    statCategories: string;
+    statVisits: string;
+    visitCardLabel: string;
+    footer: {
+      /** Template with `{{year}}` placeholder. */
+      copyright: string;
+      tagline: string;
+    };
   };
 
   nav: {
@@ -139,6 +149,14 @@ const zh: Dictionary = {
     emptyDescNone: "启用一个站点后，它会出现在这里。",
     showing: "展示 {{shown}} / {{total}} 个站点",
     totalVisits: "累计访问 {{count}}",
+    statSites: "在线站点",
+    statCategories: "分类",
+    statVisits: "累计访问",
+    visitCardLabel: "访问",
+    footer: {
+      copyright: "© {{year}} SiteHarbor",
+      tagline: "由 SiteHarbor 统一调度",
+    },
   },
 
   nav: {
@@ -269,6 +287,14 @@ const en: Dictionary = {
     emptyDescNone: "Enable a site and it will show up here.",
     showing: "Showing {{shown}} of {{total}} sites",
     totalVisits: "{{count}} total visits",
+    statSites: "Live sites",
+    statCategories: "Categories",
+    statVisits: "Total visits",
+    visitCardLabel: "Visits",
+    footer: {
+      copyright: "© {{year}} SiteHarbor",
+      tagline: "Routed through SiteHarbor",
+    },
   },
 
   nav: {
