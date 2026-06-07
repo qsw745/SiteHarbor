@@ -18,6 +18,7 @@ import {
   Plus,
   RefreshCcw,
   Save,
+  SquareArrowOutUpRight,
   Trash2,
 } from "lucide-react";
 
@@ -91,7 +92,7 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
       {error ? <div className="message-error">{resolveMessage(dict, error, params)}</div> : null}
       {ok ? <div className="message-ok">{resolveMessage(dict, ok, params)}</div> : null}
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <div className="grid gap-4">
           {sites.length ? (
             sites.map((site) => (
@@ -105,7 +106,7 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
           )}
         </div>
 
-        <aside className="card h-fit p-5 xl:sticky xl:top-24">
+        <aside className="editor-panel h-fit p-5 xl:sticky xl:top-24">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
@@ -132,6 +133,8 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
           </form>
         </aside>
       </section>
+
+      <PublicPreview sites={activeSites} dict={dict} />
     </div>
   );
 }
@@ -160,7 +163,7 @@ function SiteRow({
   dict: Dictionary;
 }) {
   return (
-    <form action={updateSiteAction.bind(null, site.id)} className="card p-5">
+    <form action={updateSiteAction.bind(null, site.id)} className="site-row p-5">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-4">
         <div className="flex min-w-0 items-center gap-3">
           <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} />
@@ -355,5 +358,60 @@ function SiteFields({
         />
       </label>
     </>
+  );
+}
+
+function PublicPreview({ sites, dict }: { sites: SiteRowSite[]; dict: Dictionary }) {
+  if (!sites.length) return null;
+
+  const categoryNames = Array.from(
+    new Set(sites.map((site) => site.category?.name ?? dict.home.uncategorized)),
+  ).slice(0, 5);
+
+  return (
+    <section className="public-preview">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
+        <div>
+          <p className="text-xs font-medium uppercase text-[var(--accent-strong)]">
+            {dict.sites.publicPreviewEyebrow}
+          </p>
+          <h3 className="mt-1 text-base font-semibold tracking-tight">
+            {dict.sites.publicPreviewTitle}
+          </h3>
+        </div>
+        <a className="btn-secondary" href="/" target="_blank">
+          {dict.viewHomepage}
+          <SquareArrowOutUpRight size={14} aria-hidden />
+        </a>
+      </div>
+      <div className="px-5 py-4">
+        <div className="flex flex-wrap gap-2">
+          <span className="chip active">{dict.home.all}</span>
+          {categoryNames.map((name) => (
+            <span className="chip" key={name}>
+              {name}
+            </span>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {sites.slice(0, 4).map((site) => (
+            <a className="preview-site-card" href={`/go/${site.slug}`} key={site.id}>
+              <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} size="sm" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{site.name}</span>
+                <span className="block truncate text-xs text-[var(--muted)]">
+                  {site.category?.name ?? dict.home.uncategorized}
+                </span>
+              </span>
+              <SquareArrowOutUpRight
+                className="ml-auto shrink-0 text-[var(--muted)]"
+                size={13}
+                aria-hidden
+              />
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

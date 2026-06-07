@@ -1,5 +1,6 @@
 import { logoutAction } from "@/app/admin/actions";
 import { AdminNav } from "@/components/AdminNav";
+import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getActiveDictionary } from "@/lib/locale";
 import { requireAdmin } from "@/lib/session";
@@ -18,32 +19,33 @@ export default async function AdminLayout({
     <main className="admin-shell">
       <aside className="admin-sidebar">
         <div className="grid gap-7">
-          <Link className="flex items-center gap-2.5" href="/admin/sites">
-            <span
-              className="grid h-9 w-9 place-items-center rounded-lg text-white"
-              style={{
-                background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-              }}
-            >
-              <span className="text-sm font-semibold">SH</span>
-            </span>
-            <div>
-              <span className="block text-base font-semibold tracking-tight">
-                {dict.brand}
-              </span>
-              <span className="block text-xs text-[var(--muted)]">{dict.console}</span>
-            </div>
+          <Link className="rounded-[var(--radius-sm)]" href="/admin/sites">
+            <BrandMark size="md" showSubtitle subtitle={dict.console} />
           </Link>
 
           <AdminNav labels={{ sites: dict.nav.sites, categories: dict.nav.categories }} />
         </div>
 
-        <form action={logoutAction}>
-          <button className="btn-ghost w-full justify-start" type="submit">
-            <LogOut size={16} aria-hidden />
-            {dict.signOut}
-          </button>
-        </form>
+        <div className="grid gap-4">
+          <div className="admin-status-panel">
+            <p className="text-xs font-medium text-[var(--muted)]">{dict.systemStatus}</p>
+            <div className="mt-3 flex items-center gap-2 text-sm font-semibold">
+              <span className="h-2 w-2 rounded-full bg-[var(--success)]" />
+              {dict.running}
+            </div>
+            <div className="mt-4 grid gap-2 border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
+              <span>{dict.databaseStatus}</span>
+              <span>{dict.brand} v1.0.0</span>
+            </div>
+          </div>
+
+          <form action={logoutAction}>
+            <button className="btn-ghost w-full justify-start" type="submit">
+              <LogOut size={16} aria-hidden />
+              {dict.signOut}
+            </button>
+          </form>
+        </div>
       </aside>
 
       <section className="admin-workspace">

@@ -11,16 +11,16 @@ const sizeClass: Record<Size, string> = {
 };
 
 const GRADIENTS = [
-  "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-  "linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)",
-  "linear-gradient(135deg, #10b981 0%, #14b8a6 100%)",
+  "linear-gradient(135deg, #0f8f86 0%, #18b7aa 100%)",
+  "linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)",
+  "linear-gradient(135deg, #10b981 0%, #65a30d 100%)",
   "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-  "linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)",
-  "linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)",
-  "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
-  "linear-gradient(135deg, #84cc16 0%, #10b981 100%)",
-  "linear-gradient(135deg, #ef4444 0%, #f59e0b 100%)",
-  "linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%)",
+  "linear-gradient(135deg, #f43f5e 0%, #ef4444 100%)",
+  "linear-gradient(135deg, #7c3aed 0%, #2563eb 100%)",
+  "linear-gradient(135deg, #0ea5e9 0%, #0f8f86 100%)",
+  "linear-gradient(135deg, #84cc16 0%, #14b8a6 100%)",
+  "linear-gradient(135deg, #dc2626 0%, #f59e0b 100%)",
+  "linear-gradient(135deg, #14b8a6 0%, #0891b2 100%)",
 ];
 
 function pickGradient(seed: string) {

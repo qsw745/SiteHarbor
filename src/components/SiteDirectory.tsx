@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { SiteAvatar } from "@/components/SiteAvatar";
 import { format, type Dictionary, type Locale } from "@/lib/i18n";
@@ -59,52 +60,46 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   ).length + (hasUncategorized ? 1 : 0);
 
   return (
-    <main className="relative flex min-h-screen flex-col pb-12">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px]"
-        style={{
-          background:
-            "radial-gradient(80% 50% at 50% 0%, rgba(99, 102, 241, 0.12), transparent 70%)",
-        }}
-      />
-
-      <div className="shell flex justify-end pt-6">
-        <LanguageSwitcher current={locale} />
-      </div>
-
-      <section className="pt-6 md:pt-10">
-        <div className="shell">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--muted-strong)] shadow-[var(--shadow-sm)]">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
-              {dict.brandTag}
+    <main className="directory-shell flex min-h-screen flex-col pb-12">
+      <header className="directory-topbar">
+        <div className="shell flex items-center justify-between gap-4">
+          <BrandMark size="lg" showSubtitle subtitle={dict.brandTag} />
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--muted-strong)] sm:inline-flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+              {format(dict.home.showing, {
+                shown: sites.length,
+                total: sites.length,
+              })}
             </span>
-            <h1 className="mt-5 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-[44px] md:leading-[1.1]">
-              {dict.home.titleBefore}{" "}
-              <span
-                style={{
-                  backgroundImage: "linear-gradient(90deg, #4f46e5 0%, #8b5cf6 100%)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                {dict.home.titleHighlight}
-              </span>
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-[var(--muted)]">
-              {dict.home.subtitle}
-            </p>
+            <LanguageSwitcher current={locale} />
+          </div>
+        </div>
+      </header>
+
+      <section className="shell pt-8">
+        <div className="directory-command">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
+            <div>
+              <p className="text-xs font-medium uppercase text-[var(--accent-strong)]">
+                {dict.brandTag}
+              </p>
+              <h1 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-[40px] md:leading-[1.12]">
+                {dict.home.titleBefore} {dict.home.titleHighlight}
+              </h1>
+              <p className="mt-3 max-w-2xl text-[15px] leading-7 text-[var(--muted)]">
+                {dict.home.subtitle}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <StatTile label={dict.home.statSites} value={sites.length} />
+              <StatTile label={dict.home.statCategories} value={usedCategoryCount} />
+              <StatTile label={dict.home.statVisits} value={totalVisits} />
+            </div>
           </div>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <StatTile label={dict.home.statSites} value={sites.length} />
-            <StatTile label={dict.home.statCategories} value={usedCategoryCount} />
-            <StatTile label={dict.home.statVisits} value={totalVisits} />
-          </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-[minmax(0,360px)_1fr] md:items-center">
+          <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,390px)_1fr] md:items-center">
             <label className="relative block w-full">
               <Search
                 aria-hidden
@@ -113,7 +108,7 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
               />
               <span className="sr-only">{dict.home.searchPlaceholder}</span>
               <input
-                className="focus-ring input pl-10"
+                className="focus-ring input input-with-icon"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={dict.home.searchPlaceholder}
@@ -152,7 +147,7 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
         </div>
       </section>
 
-      <section className="shell mt-10 flex-1">
+      <section className="shell mt-6 flex-1">
         {filteredSites.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredSites.map((site) => (
@@ -191,11 +186,9 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
 
 function StatTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[var(--radius)] border border-[var(--line)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-sm)]">
-      <div className="text-xs font-medium uppercase tracking-wider text-[var(--muted)]">
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
+    <div className="stat-tile">
+      <div className="text-[11px] font-medium uppercase text-[var(--muted)]">{label}</div>
+      <div className="mt-1 text-2xl font-semibold tracking-tight tabular-nums text-[var(--foreground)]">
         {value.toLocaleString()}
       </div>
     </div>
@@ -218,7 +211,7 @@ function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
             </p>
           </div>
         </div>
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] transition group-hover:border-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-muted)] text-[var(--muted)] transition group-hover:border-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white">
           <ArrowUpRight size={15} aria-hidden />
         </span>
       </div>
@@ -228,7 +221,7 @@ function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
       </p>
 
       <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs">
-        <span className="inline-flex items-center rounded-full bg-[var(--surface-muted)] px-2.5 py-1 font-medium text-[var(--muted-strong)]">
+        <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)] px-2.5 py-1 font-medium text-[var(--accent-strong)]">
           {categoryLabel}
         </span>
         <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-[var(--muted-strong)]">

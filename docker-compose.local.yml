@@ -1,0 +1,4 @@
+services:
+  siteharbor:
+    volumes:
+      - ./deploy/nginx-conf.d:/app/deploy/nginx-conf.d:ro

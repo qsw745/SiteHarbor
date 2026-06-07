@@ -21,6 +21,10 @@ prisma/data
 *.sqlite
 *.sqlite3
 
+# local mirror of server nginx configs for discovery testing
+deploy/nginx-conf.d/*.conf
+!deploy/nginx-conf.d/.gitkeep
+
 # logs
 logs
 *.log

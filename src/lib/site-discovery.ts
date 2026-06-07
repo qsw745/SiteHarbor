@@ -17,10 +17,15 @@ type Block = {
   header: string;
 };
 
-const DISCOVERY_PATHS = [
-  process.env.DISCOVERY_NGINX_CONF_DIR,
-  process.env.SITE_DISCOVERY_NGINX_CONF_DIR,
-].filter((value): value is string => Boolean(value));
+const LOCAL_DISCOVERY_NGINX_CONF_DIR = path.join(process.cwd(), "deploy/nginx-conf.d");
+
+function getDiscoveryPaths() {
+  return [
+    process.env.DISCOVERY_NGINX_CONF_DIR,
+    process.env.SITE_DISCOVERY_NGINX_CONF_DIR,
+    LOCAL_DISCOVERY_NGINX_CONF_DIR,
+  ].filter((value): value is string => Boolean(value));
+}
 
 const EXCLUDED_DOMAINS = new Set(["admin.qisw.top"]);
 
@@ -71,7 +76,7 @@ const KNOWN_SITE_DETAILS: Record<string, Pick<DiscoveredSite, "description" | "n
 export async function discoverServerSites() {
   const candidates = new Map<string, DiscoveredSite>();
 
-  for (const discoveryPath of DISCOVERY_PATHS) {
+  for (const discoveryPath of getDiscoveryPaths()) {
     for (const filePath of await listConfigFiles(discoveryPath)) {
       const content = await fs.readFile(filePath, "utf8");
       for (const site of discoverFromNginxConfig(content)) {

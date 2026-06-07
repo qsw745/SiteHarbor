@@ -11,6 +11,9 @@ export type Dictionary = {
   signOut: string;
   console: string;
   siteManagement: string;
+  systemStatus: string;
+  running: string;
+  databaseStatus: string;
   switchLanguage: string;
   switchTo: { zh: string; en: string };
 
@@ -60,6 +63,8 @@ export type Dictionary = {
     emptyTitle: string;
     emptyDesc: string;
     editorTag: string;
+    publicPreviewEyebrow: string;
+    publicPreviewTitle: string;
     save: string;
     enable: string;
     disable: string;
@@ -132,6 +137,9 @@ const zh: Dictionary = {
   signOut: "退出登录",
   console: "控制台",
   siteManagement: "网站管理",
+  systemStatus: "运行状态",
+  running: "运行中",
+  databaseStatus: "数据库 · SQLite",
   switchLanguage: "切换语言",
   switchTo: { zh: "切换为中文", en: "Switch to English" },
 
@@ -176,6 +184,8 @@ const zh: Dictionary = {
     emptyTitle: "还没有站点",
     emptyDesc: "在右侧添加一个入口，或扫描 Nginx 配置批量导入。",
     editorTag: "Editor",
+    publicPreviewEyebrow: "Public portal",
+    publicPreviewTitle: "公开页面预览",
     save: "保存",
     enable: "启用",
     disable: "停用",
@@ -270,6 +280,9 @@ const en: Dictionary = {
   signOut: "Sign out",
   console: "Console",
   siteManagement: "Site management",
+  systemStatus: "System status",
+  running: "Running",
+  databaseStatus: "Database · SQLite",
   switchLanguage: "Switch language",
   switchTo: { zh: "切换为中文", en: "Switch to English" },
 
@@ -316,6 +329,8 @@ const en: Dictionary = {
     emptyTitle: "No sites yet",
     emptyDesc: "Add one from the editor on the right, or scan Nginx to import in bulk.",
     editorTag: "Editor",
+    publicPreviewEyebrow: "Public portal",
+    publicPreviewTitle: "Homepage preview",
     save: "Save",
     enable: "Enable",
     disable: "Disable",

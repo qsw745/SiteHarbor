@@ -8,8 +8,9 @@ SiteHarbor is a website aggregation and management portal for a server that host
 
 - Framework: Next.js App Router with TypeScript.
 - UI: Tailwind CSS with a restrained admin-console style.
-- UI design reference: `docs/design/siteharbor-admin-ui-reference.png`.
-- Current admin direction: left sidebar control deck, top command bar, metric panels, site table, right-side add-site editor, and compact public portal preview.
+- UI design reference: Harbor Control direction generated with Product Design; original reference remains at `docs/design/siteharbor-admin-ui-reference.png`.
+- Brand assets: app/logo icon at `public/brand/siteharbor-icon.png`, also copied to `public/icon.png` and `public/apple-icon.png`.
+- Current UI direction: light Harbor Control console with sea-teal primary color, real harbor icon lockup, left sidebar control deck, top command bar, metric panels, grouped site rows, right-side add-site editor, and compact public portal/directory experience.
 - Database: Prisma + SQLite.
 - Authentication: one administrator password, stored in SQLite table `AdminAccount`; legacy `ADMIN_PASSWORD_HASH` is only a first-run/old-deployment seed when the table is empty. Login session is an HTTP-only signed cookie using `SESSION_SECRET`.
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
@@ -40,6 +41,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Production Nginx change on 2026-05-19: `/` plus `/admin` and `/admin/*` on `qisw.top` proxy to SiteHarbor. Existing paths such as `/benliu/`, `/birthday/`, and legacy `/api/` routes remain in `site.conf`.
 - Nginx backup from the SiteHarbor cutover: `/opt/nginx/conf.d/site.conf.bak-siteharbor-20260519174601`
 - Server-only compose overlay: `docker-compose.server.yml` mounts `/opt/nginx/conf.d` read-only at `/host/nginx/conf.d` and sets `DISCOVERY_NGINX_CONF_DIR=/host/nginx/conf.d`.
+- Local compose overlay: `docker-compose.local.yml` mounts untracked mirrored configs from `deploy/nginx-conf.d` so `/admin/sites` can test Nginx discovery locally without server filesystem access.
 - Admin site discovery: `/admin/sites` has a "扫描现有站点" action that reads Nginx config, imports product routes into category `产品网站`, and avoids duplicate URLs.
 - Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
@@ -54,6 +56,7 @@ Local verification:
 npm run lint
 npm run typecheck
 npm run build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 Reset admin password:

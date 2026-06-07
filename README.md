@@ -62,7 +62,9 @@ scripts/
   reset-admin-password.mjs  # Reset the persisted admin password
 deploy/
   nginx.siteharbor.conf     # Reference Nginx fragment
+  nginx-conf.d/             # Ignored local mirror of server Nginx configs
 docker-compose.yml          # Local + base service definition
+docker-compose.local.yml    # Local overlay (mounts deploy/nginx-conf.d for scan testing)
 docker-compose.server.yml   # Server overlay (mounts /opt/nginx/conf.d read-only)
 Dockerfile                  # Multi-stage prod image (Debian, Aliyun mirrors)
 ```
@@ -133,7 +135,7 @@ This drastically reduces inflation from refresh spam, Chrome's link-prefetch, an
 | `DATABASE_URL`         | yes      | Prisma SQLite path. Local: `file:../data/siteharbor.db`. Container: `file:/app/data/siteharbor.db`.      |
 | `SESSION_SECRET`       | yes      | HMAC key for the admin session cookie. **At least 32 characters**.                                       |
 | `NEXT_PUBLIC_APP_URL`  | yes      | Public origin; in production `https://qisw.top`. Controls whether the session cookie is `Secure`.        |
-| `DISCOVERY_NGINX_CONF_DIR` | no   | Directory the admin "scan Nginx" button reads. In production this is `/host/nginx/conf.d` (mounted RO).  |
+| `DISCOVERY_NGINX_CONF_DIR` | no   | Directory the admin "scan Nginx" button reads. In production this is `/host/nginx/conf.d` (mounted RO). If unset, the app also checks `deploy/nginx-conf.d` for local testing. |
 | `SITE_DISCOVERY_NGINX_CONF_DIR` | no | Alias for the above; either is accepted.                                                            |
 | `ADMIN_PASSWORD_HASH`  | no       | Optional legacy/bootstrap seed. If `AdminAccount` is empty, the app imports this hash into SQLite.       |
 
@@ -159,6 +161,21 @@ npm run dev
 ```
 
 Open <http://localhost:3000>, then log in at <http://localhost:3000/admin/login>.
+
+### Local Docker scan testing
+
+To test the admin "扫描 Nginx 配置" flow locally, mirror the server Nginx configs into
+the ignored local scan directory, then run the app with the local overlay:
+
+```bash
+mkdir -p deploy/nginx-conf.d
+scp root@101.37.21.147:/opt/nginx/conf.d/'*.conf' deploy/nginx-conf.d/
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+```
+
+The overlay mounts `deploy/nginx-conf.d` read-only into the container, so local scans
+exercise the same parser against the same production-style Nginx config without
+committing server config files to the public repository.
 
 ### Useful scripts
 
@@ -310,7 +327,7 @@ docker exec -it siteharbor sh -c 'apk add --no-cache sqlite >/dev/null 2>&1 || t
 
 ## Site Discovery From Nginx
 
-The admin "扫描 Nginx 配置" button reads every `*.conf` file under `DISCOVERY_NGINX_CONF_DIR` and looks for `server` blocks that:
+The admin "扫描 Nginx 配置" button reads every `*.conf` file under `DISCOVERY_NGINX_CONF_DIR` (plus `deploy/nginx-conf.d` when present locally) and looks for `server` blocks that:
 
 - Listen on `443 ssl` (or have an `ssl_certificate` directive)
 - Have a public, non-wildcard, non-IP `server_name`

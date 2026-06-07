@@ -9,6 +9,7 @@ prisma/data
 *.sqlite3
 .env
 .env*.local
+deploy/nginx-conf.d/*.conf
 logs
 *.log
 coverage
