@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "hash-password": "node scripts/hash-password.mjs"
+    "hash-password": "node scripts/hash-password.mjs",
+    "reset-admin-password": "node scripts/reset-admin-password.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

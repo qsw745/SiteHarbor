@@ -11,7 +11,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - UI design reference: `docs/design/siteharbor-admin-ui-reference.png`.
 - Current admin direction: left sidebar control deck, top command bar, metric panels, site table, right-side add-site editor, and compact public portal preview.
 - Database: Prisma + SQLite.
-- Authentication: one administrator password, stored as `ADMIN_PASSWORD_HASH`; login session is an HTTP-only signed cookie using `SESSION_SECRET`.
+- Authentication: one administrator password, stored in SQLite table `AdminAccount`; legacy `ADMIN_PASSWORD_HASH` is only a first-run/old-deployment seed when the table is empty. Login session is an HTTP-only signed cookie using `SESSION_SECRET`.
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
 - Production runtime: Docker Compose.
 - Docker image base stage installs `openssl` and `ca-certificates` from Aliyun Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
@@ -43,6 +43,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Admin site discovery: `/admin/sites` has a "扫描现有站点" action that reads Nginx config, imports product routes into category `产品网站`, and avoids duplicate URLs.
 - Production data: Docker volume `siteharbor-data`, mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
+- Production admin password reset: `docker exec siteharbor npm run reset-admin-password -- --generate`
 - Docker production builds use `npm run build:docker`, which skips Next.js internal typechecking; run `npm run typecheck` locally before pushing.
 
 ## Operational Commands
@@ -55,10 +56,12 @@ npm run typecheck
 npm run build
 ```
 
-Generate admin password hash:
+Reset admin password:
 
 ```bash
-npm run hash-password -- "new-admin-password"
+npm run reset-admin-password -- "new-admin-password"
+# or generate a random one:
+npm run reset-admin-password -- --generate
 ```
 
 Server update:

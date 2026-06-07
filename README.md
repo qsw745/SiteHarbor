@@ -8,7 +8,7 @@ Live deployment: <https://qisw.top/>
 
 - Public site directory with search, category filtering, and per-card click stats
 - Bilingual UI (中文 / English) with a one-click toggle, preference stored in a cookie
-- Single-admin password login, HTTP-only signed-cookie session
+- Single-admin password login, resettable from the persisted SQLite database
 - CRUD for sites and categories from the admin dashboard
 - One-click Nginx config scan that imports discovered product routes into `产品网站`
 - Click counts filter out browser prefetch, bot user-agents, and same-IP repeats within 60 s
@@ -21,7 +21,7 @@ Live deployment: <https://qisw.top/>
 - **Framework** Next.js 16 (App Router, Turbopack) + React 19 + TypeScript
 - **Styling** Tailwind CSS v4 + custom design tokens in `src/app/globals.css`
 - **Database** Prisma 6 + SQLite (file-based, persisted in a Docker volume)
-- **Auth** Single bcrypt password hash + HMAC-signed session cookie
+- **Auth** Single admin account in SQLite, bcrypt password hash + HMAC-signed session cookie
 - **Deploy** `docker buildx` (linux/amd64) → image archive over SSH → `docker compose up -d --no-build`
 
 ## Repository Layout
@@ -48,7 +48,7 @@ src/
   lib/
     prisma.ts               # Prisma client singleton
     session.ts              # Sign / verify admin cookie
-    password.ts             # bcrypt verify
+    password.ts             # admin password lookup + bcrypt verify
     site-discovery.ts       # Parse Nginx server blocks
     slug.ts                 # Slug normalisation
     messages.ts             # Map ok/error query params to text
@@ -58,7 +58,8 @@ prisma/
   migrations/               # Generated migrations
 scripts/
   deploy-image.sh           # Local build → upload → restart on server
-  hash-password.mjs         # Generate bcrypt hash for ADMIN_PASSWORD_HASH
+  hash-password.mjs         # Generate a standalone bcrypt hash
+  reset-admin-password.mjs  # Reset the persisted admin password
 deploy/
   nginx.siteharbor.conf     # Reference Nginx fragment
 docker-compose.yml          # Local + base service definition
@@ -103,9 +104,17 @@ model Site {
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
+
+model AdminAccount {
+  id           String   @id
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
 ```
 
 Deleting a category sets its sites' `categoryId` to `null` (they appear under 未分类).
+The single admin account also lives in SQLite, so a database volume backup includes the login credential state.
 
 ## Click Count Filtering
 
@@ -122,13 +131,13 @@ This drastically reduces inflation from refresh spam, Chrome's link-prefetch, an
 | Variable               | Required | Purpose                                                                                                  |
 | ---------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`         | yes      | Prisma SQLite path. Local: `file:../data/siteharbor.db`. Container: `file:/app/data/siteharbor.db`.      |
-| `ADMIN_PASSWORD_HASH`  | yes      | bcrypt hash of the admin password. Generate with `npm run hash-password -- "<password>"`.                |
 | `SESSION_SECRET`       | yes      | HMAC key for the admin session cookie. **At least 32 characters**.                                       |
 | `NEXT_PUBLIC_APP_URL`  | yes      | Public origin; in production `https://qisw.top`. Controls whether the session cookie is `Secure`.        |
 | `DISCOVERY_NGINX_CONF_DIR` | no   | Directory the admin "scan Nginx" button reads. In production this is `/host/nginx/conf.d` (mounted RO).  |
 | `SITE_DISCOVERY_NGINX_CONF_DIR` | no | Alias for the above; either is accepted.                                                            |
+| `ADMIN_PASSWORD_HASH`  | no       | Optional legacy/bootstrap seed. If `AdminAccount` is empty, the app imports this hash into SQLite.       |
 
-Use single quotes around the bcrypt hash in `.env` so Docker Compose does not try to interpolate `$2b$...`.
+Use `npm run reset-admin-password -- "<password>"` to create or reset the persisted admin password. If you keep `ADMIN_PASSWORD_HASH` for old deployments, wrap the bcrypt hash in single quotes so Docker Compose does not try to interpolate `$2b$...`.
 
 ## Local Development
 
@@ -138,13 +147,12 @@ npm install
 
 # 2. Bootstrap env
 cp .env.example .env
-npm run hash-password -- "change-this-password"
-# Paste the printed hash into ADMIN_PASSWORD_HASH in .env
 # Set SESSION_SECRET to 32+ random characters
 # Leave DATABASE_URL as file:../data/siteharbor.db for local dev
 
 # 3. Create the database
 npm run db:migrate -- --name init
+npm run reset-admin-password -- "change-this-password"
 
 # 4. Run
 npm run dev
@@ -166,7 +174,9 @@ Open <http://localhost:3000>, then log in at <http://localhost:3000/admin/login>
 | `npm run db:migrate -- --name X`     | Create + apply a new migration (dev)                        |
 | `npm run db:deploy`                  | Apply pending migrations (used inside the container)        |
 | `npm run db:studio`                  | Open Prisma Studio                                          |
-| `npm run hash-password -- "pwd"`     | Generate a bcrypt hash for `ADMIN_PASSWORD_HASH`            |
+| `npm run hash-password -- "pwd"`     | Generate a standalone bcrypt hash                           |
+| `npm run reset-admin-password -- "pwd"` | Create or reset the persisted admin password             |
+| `npm run reset-admin-password -- --generate` | Generate and store a random admin password          |
 
 ### Pre-deploy verification
 
@@ -198,16 +208,21 @@ cd /opt
 git clone https://github.com/qsw745/SiteHarbor.git siteharbor
 cd /opt/siteharbor
 cp .env.example .env
-# Generate the bcrypt hash locally and paste it in, or run hash-password on the server
 ```
 
 Edit `/opt/siteharbor/.env`:
 
 ```env
 DATABASE_URL="file:/app/data/siteharbor.db"
-ADMIN_PASSWORD_HASH='paste_generated_hash_here'
 SESSION_SECRET="replace_with_at_least_32_random_characters"
 NEXT_PUBLIC_APP_URL="https://qisw.top"
+```
+
+After the container has run migrations, create the first admin password:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.server.yml up -d --no-build
+docker exec siteharbor npm run reset-admin-password -- --generate
 ```
 
 Connect the existing Nginx container to SiteHarbor's network (only needed once):
@@ -249,6 +264,21 @@ git push
 ssh root@101.37.21.147 'curl -I http://127.0.0.1:3000'
 curl -I https://qisw.top/
 curl -I https://qisw.top/admin/login
+```
+
+### Reset admin password
+
+Run this on the server when the admin password is forgotten:
+
+```bash
+ssh root@101.37.21.147
+docker exec siteharbor npm run reset-admin-password -- --generate
+```
+
+Use an explicit password instead when needed:
+
+```bash
+docker exec siteharbor npm run reset-admin-password -- "new-long-admin-password"
 ```
 
 ### Rollback
@@ -307,7 +337,7 @@ For `qisw.top` the scanner also enumerates top-level `location /<segment>/` bloc
 
 - Do not commit `.env`, the SQLite database file, server credentials, or production logs (`.gitignore` already excludes them).
 - Use a long, random `SESSION_SECRET`.
-- Wrap bcrypt hashes in single quotes in `.env` so Docker Compose does not treat `$` characters as variable interpolation.
+- Admin password hashes are stored in SQLite and should be reset through `reset-admin-password`. Keep old `ADMIN_PASSWORD_HASH` values out of Git.
 - The session cookie is marked `Secure` only when `NODE_ENV=production` **and** `NEXT_PUBLIC_APP_URL` starts with `https://`.
 - Production HTTPS currently uses <https://qisw.top/>.
 - The GitHub repository is public because no production secrets or data are committed; double-check before adding new files.
@@ -317,7 +347,8 @@ For `qisw.top` the scanner also enumerates top-level `location /<segment>/` bloc
 | Symptom                                                  | Likely cause / fix                                                                                                                |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `SESSION_SECRET must be set to at least 32 characters.`  | Set `SESSION_SECRET` to a 32+ character random string in `.env`.                                                                  |
-| Login form rejects the correct password                  | `ADMIN_PASSWORD_HASH` was wrapped in double quotes and `$` got interpolated. Re-generate with `hash-password` and use `'…'`.       |
+| Login form rejects the correct password                  | Reset the persisted password with `docker exec siteharbor npm run reset-admin-password -- --generate`.                             |
+| Login says the admin password is not configured          | Run migrations, then run `npm run reset-admin-password -- "<password>"` locally or inside the container.                           |
 | `docker compose` fails with `network ... not found`      | Run `docker network connect siteharbor_default nginx` on the server, then reload Nginx.                                            |
 | `prisma: command not found` during a manual server build | Use `scripts/deploy-image.sh` instead — production should never run `npm ci` / `next build`.                                       |
 | Click counts not increasing                              | Expected for prefetch/bot UAs and same-IP repeats within 60 s. Hit `/go/<slug>` from a clean browser or curl with a real UA.        |

@@ -18,8 +18,12 @@ export async function loginAction(
     return { error: "err-password-required" };
   }
 
-  const valid = await verifyAdminPassword(password);
-  if (!valid) {
+  const passwordCheck = await verifyAdminPassword(password);
+  if (passwordCheck === "unconfigured") {
+    return { error: "err-password-unconfigured" };
+  }
+
+  if (passwordCheck !== "valid") {
     return { error: "err-password-invalid" };
   }
 
