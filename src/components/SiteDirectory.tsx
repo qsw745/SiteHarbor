@@ -4,10 +4,14 @@ import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { format, type Dictionary, type Locale } from "@/lib/i18n";
 import {
+  Activity,
   ArrowUpRight,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
-  Eye,
+  Compass,
+  Globe2,
+  Layers3,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -43,6 +47,13 @@ type BookPage = {
   position: "previous" | "active" | "next";
 };
 
+type SiteNarrative = {
+  longDescription: string;
+  role: string;
+  mood: string;
+  highlights: string[];
+};
+
 const COVER_GRADIENTS = [
   "linear-gradient(135deg, #0b4f6c 0%, #0f8f86 42%, #f4c95d 100%)",
   "linear-gradient(135deg, #30336b 0%, #6c5ce7 46%, #00cec9 100%)",
@@ -60,7 +71,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const [isUserBrowsing, setIsUserBrowsing] = useState(false);
   const [hasUserBrowsed, setHasUserBrowsed] = useState(false);
   const [lastActivityAt, setLastActivityAt] = useState(() => Date.now());
-  const [dreamCountdown, setDreamCountdown] = useState<number | null>(null);
   const [isDreamTransitioning, setIsDreamTransitioning] = useState(false);
   const copy = getDirectoryCopy(locale);
 
@@ -84,13 +94,13 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const canAdvance = filteredSites.length > 1;
 
   useEffect(() => {
-    if (!canAdvance || isPaused || isUserBrowsing || dreamCountdown !== null) return;
+    if (!canAdvance || isPaused || isUserBrowsing || isDreamTransitioning) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % filteredSites.length);
     }, 5200);
 
     return () => window.clearInterval(timer);
-  }, [canAdvance, dreamCountdown, filteredSites.length, isPaused, isUserBrowsing]);
+  }, [canAdvance, filteredSites.length, isDreamTransitioning, isPaused, isUserBrowsing]);
 
   useEffect(() => {
     let browsingTimer: number | undefined;
@@ -99,7 +109,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
       setIsUserBrowsing(true);
       setHasUserBrowsed(true);
       setLastActivityAt(Date.now());
-      setDreamCountdown(null);
       setIsDreamTransitioning(false);
       window.clearTimeout(browsingTimer);
       browsingTimer = window.setTimeout(() => setIsUserBrowsing(false), 1600);
@@ -124,45 +133,34 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   }, []);
 
   useEffect(() => {
-    if (!canAdvance || !hasUserBrowsed || dreamCountdown !== null || isDreamTransitioning) {
+    if (!canAdvance || !hasUserBrowsed || isDreamTransitioning) {
       return;
     }
 
+    let advancing = false;
+    let advanceTimer: number | undefined;
     const idleCheck = window.setInterval(() => {
+      if (advancing) return;
       const page = document.documentElement;
       const bottomOffset = page.scrollHeight - (window.scrollY + window.innerHeight);
       const idleLongEnough = Date.now() - lastActivityAt >= 2600;
 
       if (bottomOffset <= 36 && idleLongEnough) {
-        setDreamCountdown(3);
+        advancing = true;
+        setIsDreamTransitioning(true);
+        advanceTimer = window.setTimeout(() => {
+          setActiveIndex((current) => (current + 1) % filteredSites.length);
+          setLastActivityAt(Date.now());
+          setIsDreamTransitioning(false);
+        }, 720);
       }
     }, 300);
 
-    return () => window.clearInterval(idleCheck);
-  }, [canAdvance, dreamCountdown, hasUserBrowsed, isDreamTransitioning, lastActivityAt]);
-
-  useEffect(() => {
-    if (dreamCountdown === null || !canAdvance) return;
-
-    if (dreamCountdown > 0) {
-      const countTimer = window.setTimeout(() => {
-        setDreamCountdown((current) => (current === null ? null : current - 1));
-      }, 1000);
-      return () => window.clearTimeout(countTimer);
-    }
-
-    const transitionTimer = window.setTimeout(() => setIsDreamTransitioning(true), 0);
-    const advanceTimer = window.setTimeout(() => {
-      setActiveIndex((current) => (current + 1) % filteredSites.length);
-      setDreamCountdown(null);
-      setIsDreamTransitioning(false);
-    }, 720);
-
     return () => {
-      window.clearTimeout(transitionTimer);
+      window.clearInterval(idleCheck);
       window.clearTimeout(advanceTimer);
     };
-  }, [canAdvance, dreamCountdown, filteredSites.length]);
+  }, [canAdvance, filteredSites.length, hasUserBrowsed, isDreamTransitioning, lastActivityAt]);
 
   const hasUncategorized = sites.some((site) => !site.categorySlug);
   const totalVisits = sites.reduce((sum, site) => sum + site.clickCount, 0);
@@ -178,7 +176,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const goTo = (index: number) => {
     if (!filteredSites.length) return;
     const nextIndex = (index + filteredSites.length) % filteredSites.length;
-    setDreamCountdown(null);
     setIsDreamTransitioning(false);
     setActiveIndex(nextIndex);
   };
@@ -188,7 +185,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const selectCategory = (nextCategory: string) => {
     setCategory(nextCategory);
     setActiveIndex(0);
-    setDreamCountdown(null);
     setIsDreamTransitioning(false);
   };
 
@@ -244,7 +240,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
         className="dream-stage shell"
         onMouseEnter={() => {
           setIsPaused(true);
-          setDreamCountdown(null);
         }}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -332,7 +327,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
             onChange={(event) => {
               setQuery(event.target.value);
               setActiveIndex(0);
-              setDreamCountdown(null);
               setIsDreamTransitioning(false);
             }}
             placeholder={dict.home.searchPlaceholder}
@@ -374,17 +368,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
         <span>{format(dict.home.showing, { shown: filteredSites.length, total: sites.length })}</span>
       </footer>
 
-      {dreamCountdown !== null || isDreamTransitioning ? (
-        <div className="dream-countdown-overlay" role="status" aria-live="polite">
-          <div className="dream-countdown-card">
-            <span className="dream-countdown-rune" aria-hidden>
-              ✦
-            </span>
-            <p>{copy.dreamCountdown}</p>
-            <strong>{dreamCountdown && dreamCountdown > 0 ? dreamCountdown : copy.dreamNow}</strong>
-          </div>
-        </div>
-      ) : null}
     </main>
   );
 }
@@ -469,20 +452,58 @@ function SiteStory({
 }) {
   const copy = getDirectoryCopy(locale);
   const categoryLabel = site.categoryName || dict.home.uncategorized;
+  const narrative = getSiteNarrative(site, locale, dict);
+  const displayUrl = formatUrl(site.url);
 
   return (
     <article className="dream-story">
-      <div className="dream-story-meta">
-        <span>{String(currentIndex).padStart(2, "0")}</span>
-        <span>/</span>
-        <span>{String(total).padStart(2, "0")}</span>
-        <span>{categoryLabel}</span>
-      </div>
-      <div>
+      <div className="dream-story-main">
+        <div className="dream-story-meta">
+          <span>{String(currentIndex).padStart(2, "0")}</span>
+          <span>/</span>
+          <span>{String(total).padStart(2, "0")}</span>
+          <span>{categoryLabel}</span>
+        </div>
         <h2>{site.name}</h2>
-        <p>{site.description || dict.home.noDescription}</p>
+        <p className="dream-story-lead">{site.description || dict.home.noDescription}</p>
+        <p className="dream-story-long">{narrative.longDescription}</p>
       </div>
-      <div className="dream-story-actions">
+
+      <div className="dream-site-profile">
+        <div className="dream-profile-heading">
+          <BookOpen size={16} aria-hidden />
+          <span>{copy.siteProfile}</span>
+        </div>
+        <dl className="dream-site-facts">
+          <div>
+            <dt>
+              <Globe2 size={14} aria-hidden />
+              {copy.entryPath}
+            </dt>
+            <dd>{displayUrl}</dd>
+          </div>
+          <div>
+            <dt>
+              <Layers3 size={14} aria-hidden />
+              {copy.siteRole}
+            </dt>
+            <dd>{narrative.role}</dd>
+          </div>
+          <div>
+            <dt>
+              <Activity size={14} aria-hidden />
+              {copy.visitHeat}
+            </dt>
+            <dd>{format(dict.home.visits, { count: site.clickCount })}</dd>
+          </div>
+          <div>
+            <dt>
+              <Compass size={14} aria-hidden />
+              {copy.browseMood}
+            </dt>
+            <dd>{narrative.mood}</dd>
+          </div>
+        </dl>
         <a
           className="dream-visit-button"
           href={`/go/${site.slug}`}
@@ -492,11 +513,15 @@ function SiteStory({
           {copy.openSite}
           <ArrowUpRight size={17} aria-hidden />
         </a>
-        <span className="dream-story-url">{formatUrl(site.url)}</span>
-        <span className="dream-story-visits">
-          <Eye size={14} aria-hidden />
-          {format(dict.home.visits, { count: site.clickCount })}
-        </span>
+      </div>
+
+      <div className="dream-highlight-lane" aria-label={copy.highlights}>
+        {narrative.highlights.map((item, index) => (
+          <div className="dream-highlight" key={item}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <p>{item}</p>
+          </div>
+        ))}
       </div>
     </article>
   );
@@ -566,6 +591,139 @@ function pickCoverGradient(seed: string) {
   return COVER_GRADIENTS[hash % COVER_GRADIENTS.length];
 }
 
+function getSiteNarrative(site: DirectorySite, locale: Locale, dict: Dictionary): SiteNarrative {
+  const description = site.description || dict.home.noDescription;
+  const category = site.categoryName || dict.home.uncategorized;
+
+  const zhNarratives: Record<string, SiteNarrative> = {
+    siteharbor: {
+      longDescription:
+        "这是这台服务器的总入口，也是所有产品网站的索引页。它把分散在不同路径、子域和服务里的项目收束到一个可浏览的空间里，让访客不用记住每一个地址，也能快速理解每个站点的用途、状态和访问路径。",
+      role: "服务器入口总控台",
+      mood: "清晰导航 / 轻量管理",
+      highlights: [
+        "公开页负责展示可访问的网站，后台负责维护名称、分类、排序、启停和目标链接。",
+        "每一次从入口跳转都会记录访问次数，方便判断哪些站点更常被打开。",
+        "适合作为服务器主页，既能给访客导航，也能给自己留一张完整的网站地图。",
+      ],
+    },
+    benliu: {
+      longDescription:
+        "奔流是面向桌面端的下载管理工具，重点解决浏览器下载分散、任务状态不清晰、视频站点处理复杂的问题。入口页用于把产品官网、下载说明和后续更新集中呈现，方便用户从一个稳定路径抵达。",
+      role: "桌面下载管理器官网",
+      mood: "效率工具 / 下载中枢",
+      highlights: [
+        "浏览器扩展接管普通下载，多连接任务进入统一桌面队列。",
+        "视频站点交给独立处理链路，减少普通下载和媒体解析互相干扰。",
+        "适合作为用户下载、查看更新、理解产品能力的固定入口。",
+      ],
+    },
+    birthday: {
+      longDescription:
+        "生日提醒站点把农历生日、下一次提醒时间和邮件通知放在一个轻量页面里。它更像一份安静运行的生活清单，负责把容易忘记的重要日期提前托管起来。",
+      role: "生日与提醒管理",
+      mood: "生活助手 / 准时提醒",
+      highlights: [
+        "支持维护生日清单，并自动计算下一次需要提醒的时间。",
+        "适合存放家人朋友的重要日期，减少临近当天才想起来的尴尬。",
+        "邮件提醒让它可以在后台安静运行，不需要每天手动打开检查。",
+      ],
+    },
+    profiledock: {
+      longDescription:
+        "ProfileDock 用来管理 Claude、Codex 等多账号本地配置，把不同账号的数据目录、启动入口和 Dock 图标隔离开。它的价值在于减少反复登录、切换环境和误用账号带来的混乱。",
+      role: "多账号本地隔离工具",
+      mood: "开发辅助 / 环境切换",
+      highlights: [
+        "每个账号拥有独立的数据目录和启动入口，降低配置互相污染的风险。",
+        "适合需要频繁在不同 AI 工具账号之间切换的本地工作流。",
+        "备份、重置和入口管理集中在一个工具里，减少手工维护成本。",
+      ],
+    },
+    "qingsong-notes": {
+      longDescription:
+        "青松笔记用于沉淀个人技术教程、排查记录和长期可复用的操作经验。它不是临时备忘，而是把已经验证过的步骤整理成之后还能重新执行的知识入口。",
+      role: "个人技术笔记站",
+      mood: "知识沉淀 / 教程归档",
+      highlights: [
+        "适合存放教程、排错过程、部署记录和反复使用的命令说明。",
+        "内容面向之后的自己，强调可复现、可检索和少走弯路。",
+        "作为服务器上的公开笔记入口，可以和其它产品站点自然串联。",
+      ],
+    },
+    cloudshellconsole: {
+      longDescription:
+        "CloudShellConsole 是专业 SSH/SFTP 客户端的产品入口，面向需要经常连接服务器、管理文件和处理远程终端任务的用户。它强调原生桌面体验、多标签工作流和更安全的本地认证方式。",
+      role: "SSH/SFTP 桌面客户端",
+      mood: "运维工具 / 多标签终端",
+      highlights: [
+        "终端、多标签和 SFTP 文件传输放在同一个桌面工作区里。",
+        "面向 macOS 和 Windows 原生体验，减少 Web 工具常见的割裂感。",
+        "支持 Touch ID / 安全隔区等认证方式，让高频连接更顺手。",
+      ],
+    },
+    "online-exam": {
+      longDescription:
+        "在线考试系统负责题库、考试、阅卷、学习进度和后台权限等教学管理流程。它适合把考试组织、过程管理和结果查看集中在一个稳定入口里。",
+      role: "在线考试与题库平台",
+      mood: "学习系统 / 流程管理",
+      highlights: [
+        "覆盖题库维护、考试组织、阅卷和学习进度查看等核心流程。",
+        "统一挂载在服务器固定路径，方便学生或管理员直接访问。",
+        "后台权限与考试管理集中化，适合持续扩展教学场景。",
+      ],
+    },
+  };
+
+  const enNarratives: Record<string, SiteNarrative> = {
+    siteharbor: {
+      longDescription:
+        "This is the server's front door and the map for every hosted project. It turns scattered paths, subdomains, and services into one readable directory so visitors can understand what each site does before opening it.",
+      role: "Server entry console",
+      mood: "Clear navigation / light control",
+      highlights: [
+        "The public page presents enabled sites while the admin area maintains names, categories, order, status, and target URLs.",
+        "Every SiteHarbor jump records a visit count, making frequently used destinations easier to spot.",
+        "It works as a practical server homepage for visitors and as a living site map for maintenance.",
+      ],
+    },
+    benliu: {
+      longDescription:
+        "Benliu is a desktop download manager entry point. It gives users a stable place to understand the product, reach downloads, and follow updates without hunting through scattered links.",
+      role: "Download manager site",
+      mood: "Utility / download hub",
+      highlights: [
+        "Browser extension capture and desktop queue management live in one workflow.",
+        "Media sites can use a dedicated path so ordinary downloads stay clean.",
+        "The entry is built for downloads, product context, and update discovery.",
+      ],
+    },
+  };
+
+  const fallback: SiteNarrative = {
+    longDescription:
+      locale === "en"
+        ? `${description} This entry keeps the destination, category, and visit context together so the site can be understood before opening it.`
+        : `${description} 这个入口会把目标地址、分类、访问热度和站点说明放在一起展示，让访客在点击前先知道它解决什么问题、适合什么场景。`,
+    role: category,
+    mood: locale === "en" ? "Hosted site / quick access" : "托管站点 / 快速抵达",
+    highlights:
+      locale === "en"
+        ? [
+            "The cover, introduction, path, and visit data update together as the carousel changes.",
+            "Search and category filters keep the directory useful as the number of sites grows.",
+            "The `/go` entry keeps navigation consistent while preserving the target URL.",
+          ]
+        : [
+            "封面、简介、访问路径和热度会随着轮播切换同步更新。",
+            "搜索和分类可以在站点变多后继续保持入口清晰。",
+            "统一通过 `/go` 入口跳转，既保持导航一致，也保留真实目标地址。",
+          ],
+  };
+
+  return (locale === "en" ? enNarratives[site.slug] : zhNarratives[site.slug]) ?? fallback;
+}
+
 function getDirectoryCopy(locale: Locale) {
   if (locale === "en") {
     return {
@@ -577,8 +735,12 @@ function getDirectoryCopy(locale: Locale) {
       next: "Next site",
       openSite: "Open site",
       pickSite: "Choose site",
-      dreamCountdown: "Entering the next dream in",
-      dreamNow: "Now",
+      siteProfile: "Site profile",
+      entryPath: "Entry path",
+      siteRole: "Role",
+      visitHeat: "Visit heat",
+      browseMood: "Browse mood",
+      highlights: "Site highlights",
     };
   }
 
@@ -590,8 +752,12 @@ function getDirectoryCopy(locale: Locale) {
     next: "下一个站点",
     openSite: "进入网站",
     pickSite: "选择站点",
-    dreamCountdown: "即将进入下一个梦幻",
-    dreamNow: "启程",
+    siteProfile: "站点档案",
+    entryPath: "访问入口",
+    siteRole: "用途定位",
+    visitHeat: "浏览热度",
+    browseMood: "浏览感觉",
+    highlights: "站点亮点",
   };
 }
 

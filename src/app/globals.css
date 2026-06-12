@@ -708,8 +708,8 @@ button {
 
 .dream-stage {
   display: grid;
-  gap: 16px;
-  margin-top: 22px;
+  gap: clamp(20px, 3vw, 30px);
+  margin-top: 28px;
 }
 
 .dream-transitioning .book-cover.active {
@@ -764,7 +764,7 @@ button {
 .book-pages {
   position: relative;
   display: grid;
-  min-height: clamp(320px, 42vw, 460px);
+  min-height: clamp(360px, 43vw, 500px);
   place-items: center;
   transform-style: preserve-3d;
 }
@@ -926,16 +926,28 @@ button {
 
 .dream-story {
   display: grid;
-  grid-template-columns: minmax(84px, 0.22fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(310px, 0.66fr);
+  grid-template-areas:
+    "main profile"
+    "highlights profile";
+  align-items: stretch;
+  gap: clamp(20px, 3vw, 34px);
+  min-height: clamp(370px, 34vw, 470px);
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.66);
-  padding: clamp(18px, 3vw, 28px);
+  padding: clamp(22px, 3.5vw, 38px);
   box-shadow: 0 20px 54px rgba(16, 32, 44, 0.1);
   backdrop-filter: blur(18px);
   animation: story-rise 420ms ease both;
+}
+
+.dream-story-main {
+  grid-area: main;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .dream-story-meta {
@@ -949,25 +961,108 @@ button {
 }
 
 .dream-story h2 {
+  margin-top: 14px;
   color: var(--foreground);
-  font-size: clamp(24px, 3vw, 36px);
+  font-size: clamp(34px, 4.8vw, 58px);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 0.98;
   overflow-wrap: anywhere;
 }
 
-.dream-story p {
-  margin-top: 8px;
+.dream-story-lead {
+  margin-top: 18px;
   max-width: 720px;
   color: var(--muted-strong);
-  font-size: 15px;
-  line-height: 1.75;
+  font-size: clamp(15px, 1.8vw, 18px);
+  line-height: 1.78;
 }
 
-.dream-story-actions {
+.dream-story-long {
+  margin-top: 12px;
+  max-width: 780px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.82;
+}
+
+.dream-site-profile {
+  grid-area: profile;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 1px solid rgba(16, 32, 44, 0.11);
+  padding-left: clamp(18px, 3vw, 30px);
+}
+
+.dream-profile-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #3550a2;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.dream-site-facts {
   display: grid;
-  justify-items: end;
-  gap: 9px;
+  gap: 0;
+  margin: 18px 0 22px;
+}
+
+.dream-site-facts div {
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid rgba(16, 32, 44, 0.09);
+  padding: 13px 0;
+}
+
+.dream-site-facts div:last-child {
+  border-bottom: 1px solid rgba(16, 32, 44, 0.09);
+}
+
+.dream-site-facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dream-site-facts dd {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 780;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dream-highlight-lane {
+  grid-area: highlights;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 20px);
+  align-self: end;
+  border-top: 1px solid rgba(16, 32, 44, 0.1);
+  padding-top: clamp(16px, 2.4vw, 24px);
+}
+
+.dream-highlight {
+  min-width: 0;
+}
+
+.dream-highlight span {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dream-highlight p {
+  margin-top: 8px;
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 .dream-visit-button {
@@ -975,6 +1070,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  width: fit-content;
   min-height: 42px;
   border-radius: 999px;
   background: #10202c;
@@ -991,25 +1087,6 @@ button {
 .dream-visit-button:hover {
   background: var(--accent-strong);
   transform: translateY(-2px);
-}
-
-.dream-story-url,
-.dream-story-visits {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.dream-story-url {
-  max-width: 240px;
-  overflow-wrap: anywhere;
-  text-align: right;
-}
-
-.dream-story-visits {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }
 
 .dream-thumbnails {
@@ -1078,85 +1155,6 @@ button {
   line-height: 1.7;
 }
 
-.dream-countdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, rgba(16, 32, 44, 0.1), rgba(53, 80, 162, 0.12)),
-    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 22px);
-  animation: dream-overlay-in 260ms ease both;
-}
-
-.dream-countdown-card {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: min(360px, calc(100% - 36px));
-  min-height: 260px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.74);
-  color: var(--foreground);
-  padding: 28px;
-  text-align: center;
-  box-shadow: 0 32px 90px rgba(16, 32, 44, 0.22);
-  backdrop-filter: blur(20px) saturate(150%);
-}
-
-.dream-countdown-card::before,
-.dream-countdown-card::after {
-  content: "";
-  position: absolute;
-  inset: 28px;
-  border: 1px solid rgba(15, 143, 134, 0.28);
-  transform: rotate(45deg);
-  animation: dream-sigil-spin 5.2s linear infinite;
-}
-
-.dream-countdown-card::after {
-  inset: 52px;
-  border-color: rgba(53, 80, 162, 0.24);
-  animation-direction: reverse;
-}
-
-.dream-countdown-rune,
-.dream-countdown-card p,
-.dream-countdown-card strong {
-  position: relative;
-  z-index: 1;
-}
-
-.dream-countdown-rune {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  color: var(--accent-strong);
-  font-size: 30px;
-  animation: dream-rune-pulse 1s ease-in-out infinite;
-}
-
-.dream-countdown-card p {
-  margin-top: 8px;
-  color: var(--muted-strong);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.dream-countdown-card strong {
-  color: #3550a2;
-  font-size: clamp(66px, 16vw, 112px);
-  font-weight: 900;
-  line-height: 0.95;
-  text-shadow: 0 14px 28px rgba(53, 80, 162, 0.16);
-  animation: dream-number-pop 1s ease both;
-}
-
 @keyframes book-page-arrive {
   from {
     opacity: 0.62;
@@ -1198,44 +1196,6 @@ button {
   100% {
     opacity: 0;
     transform: translateY(14px);
-  }
-}
-
-@keyframes dream-overlay-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes dream-sigil-spin {
-  to {
-    transform: rotate(405deg);
-  }
-}
-
-@keyframes dream-rune-pulse {
-  0%,
-  100% {
-    opacity: 0.72;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes dream-number-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.78) translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 
@@ -1315,16 +1275,22 @@ button {
 
   .dream-story {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "profile"
+      "highlights";
     align-items: start;
   }
 
-  .dream-story-actions {
-    justify-items: start;
+  .dream-site-profile {
+    border-left: 0;
+    border-top: 1px solid rgba(16, 32, 44, 0.1);
+    padding-top: 18px;
+    padding-left: 0;
   }
 
-  .dream-story-url {
-    max-width: 100%;
-    text-align: left;
+  .dream-highlight-lane {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1422,16 +1388,30 @@ button {
 
   .dream-story {
     gap: 14px;
+    min-height: 0;
     padding: 18px;
   }
 
   .dream-story h2 {
-    font-size: 25px;
+    margin-top: 10px;
+    font-size: 30px;
+    line-height: 1.02;
   }
 
-  .dream-story p {
+  .dream-story-lead {
     font-size: 14px;
     line-height: 1.65;
+  }
+
+  .dream-story-long,
+  .dream-highlight p {
+    font-size: 13px;
+    line-height: 1.62;
+  }
+
+  .dream-highlight-lane {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .dream-visit-button {
