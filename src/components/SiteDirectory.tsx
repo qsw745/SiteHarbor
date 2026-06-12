@@ -58,7 +58,8 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isUserBrowsing, setIsUserBrowsing] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(false);
+  const [hasUserBrowsed, setHasUserBrowsed] = useState(false);
+  const [lastActivityAt, setLastActivityAt] = useState(() => Date.now());
   const [dreamCountdown, setDreamCountdown] = useState<number | null>(null);
   const [isDreamTransitioning, setIsDreamTransitioning] = useState(false);
   const copy = getDirectoryCopy(locale);
@@ -94,62 +95,51 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   useEffect(() => {
     let browsingTimer: number | undefined;
 
-    const updateBottomState = () => {
-      const page = document.documentElement;
-      const bottomOffset = page.scrollHeight - (window.scrollY + window.innerHeight);
-      setIsAtBottom(bottomOffset <= 36);
-    };
-
     const markBrowsing = () => {
       setIsUserBrowsing(true);
+      setHasUserBrowsed(true);
+      setLastActivityAt(Date.now());
       setDreamCountdown(null);
       setIsDreamTransitioning(false);
       window.clearTimeout(browsingTimer);
       browsingTimer = window.setTimeout(() => setIsUserBrowsing(false), 1600);
     };
 
-    const handleActivity = () => {
-      markBrowsing();
-      updateBottomState();
-    };
-
-    const initialCheck = window.setTimeout(updateBottomState, 0);
-    const bottomCheck = window.setInterval(updateBottomState, 700);
-    window.addEventListener("scroll", handleActivity, { passive: true });
-    window.addEventListener("wheel", handleActivity, { passive: true });
-    window.addEventListener("touchstart", handleActivity, { passive: true });
-    window.addEventListener("pointerdown", handleActivity);
-    window.addEventListener("keydown", handleActivity);
-    window.addEventListener("resize", updateBottomState);
+    window.addEventListener("scroll", markBrowsing, { passive: true });
+    window.addEventListener("wheel", markBrowsing, { passive: true });
+    window.addEventListener("touchstart", markBrowsing, { passive: true });
+    window.addEventListener("pointerdown", markBrowsing);
+    window.addEventListener("keydown", markBrowsing);
+    window.addEventListener("resize", markBrowsing);
 
     return () => {
-      window.clearTimeout(initialCheck);
-      window.clearInterval(bottomCheck);
       window.clearTimeout(browsingTimer);
-      window.removeEventListener("scroll", handleActivity);
-      window.removeEventListener("wheel", handleActivity);
-      window.removeEventListener("touchstart", handleActivity);
-      window.removeEventListener("pointerdown", handleActivity);
-      window.removeEventListener("keydown", handleActivity);
-      window.removeEventListener("resize", updateBottomState);
+      window.removeEventListener("scroll", markBrowsing);
+      window.removeEventListener("wheel", markBrowsing);
+      window.removeEventListener("touchstart", markBrowsing);
+      window.removeEventListener("pointerdown", markBrowsing);
+      window.removeEventListener("keydown", markBrowsing);
+      window.removeEventListener("resize", markBrowsing);
     };
   }, []);
 
   useEffect(() => {
-    if (
-      !canAdvance ||
-      !isAtBottom ||
-      isUserBrowsing ||
-      isPaused ||
-      dreamCountdown !== null ||
-      isDreamTransitioning
-    ) {
+    if (!canAdvance || !hasUserBrowsed || dreamCountdown !== null || isDreamTransitioning) {
       return;
     }
 
-    const idleTimer = window.setTimeout(() => setDreamCountdown(3), 2600);
-    return () => window.clearTimeout(idleTimer);
-  }, [canAdvance, dreamCountdown, isAtBottom, isDreamTransitioning, isPaused, isUserBrowsing]);
+    const idleCheck = window.setInterval(() => {
+      const page = document.documentElement;
+      const bottomOffset = page.scrollHeight - (window.scrollY + window.innerHeight);
+      const idleLongEnough = Date.now() - lastActivityAt >= 2600;
+
+      if (bottomOffset <= 36 && idleLongEnough) {
+        setDreamCountdown(3);
+      }
+    }, 300);
+
+    return () => window.clearInterval(idleCheck);
+  }, [canAdvance, dreamCountdown, hasUserBrowsed, isDreamTransitioning, lastActivityAt]);
 
   useEffect(() => {
     if (dreamCountdown === null || !canAdvance) return;
