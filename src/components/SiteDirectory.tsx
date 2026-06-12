@@ -2,10 +2,16 @@
 
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { SiteAvatar } from "@/components/SiteAvatar";
 import { format, type Dictionary, type Locale } from "@/lib/i18n";
-import { ArrowUpRight, Eye, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Search,
+  Sparkles,
+} from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 export type DirectoryCategory = {
   id: string;
@@ -32,9 +38,30 @@ type SiteDirectoryProps = {
   locale: Locale;
 };
 
+type BookPage = {
+  site: DirectorySite;
+  position: "previous" | "active" | "next";
+};
+
+const COVER_GRADIENTS = [
+  "linear-gradient(135deg, #0b4f6c 0%, #0f8f86 42%, #f4c95d 100%)",
+  "linear-gradient(135deg, #30336b 0%, #6c5ce7 46%, #00cec9 100%)",
+  "linear-gradient(135deg, #12343b 0%, #2ec4b6 48%, #ffbf69 100%)",
+  "linear-gradient(135deg, #1f2937 0%, #2563eb 44%, #f0abfc 100%)",
+  "linear-gradient(135deg, #0f172a 0%, #14b8a6 48%, #fb7185 100%)",
+  "linear-gradient(135deg, #164e63 0%, #38bdf8 45%, #fde68a 100%)",
+];
+
 export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectoryProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isUserBrowsing, setIsUserBrowsing] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(false);
+  const [dreamCountdown, setDreamCountdown] = useState<number | null>(null);
+  const [isDreamTransitioning, setIsDreamTransitioning] = useState(false);
+  const copy = getDirectoryCopy(locale);
 
   const filteredSites = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -53,19 +80,145 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
     });
   }, [category, query, sites]);
 
+  const canAdvance = filteredSites.length > 1;
+
+  useEffect(() => {
+    if (!canAdvance || isPaused || isUserBrowsing || dreamCountdown !== null) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % filteredSites.length);
+    }, 5200);
+
+    return () => window.clearInterval(timer);
+  }, [canAdvance, dreamCountdown, filteredSites.length, isPaused, isUserBrowsing]);
+
+  useEffect(() => {
+    let browsingTimer: number | undefined;
+
+    const updateBottomState = () => {
+      const page = document.documentElement;
+      const bottomOffset = page.scrollHeight - (window.scrollY + window.innerHeight);
+      setIsAtBottom(bottomOffset <= 36);
+    };
+
+    const markBrowsing = () => {
+      setIsUserBrowsing(true);
+      setDreamCountdown(null);
+      setIsDreamTransitioning(false);
+      window.clearTimeout(browsingTimer);
+      browsingTimer = window.setTimeout(() => setIsUserBrowsing(false), 1600);
+    };
+
+    const handleActivity = () => {
+      markBrowsing();
+      updateBottomState();
+    };
+
+    const initialCheck = window.setTimeout(updateBottomState, 0);
+    const bottomCheck = window.setInterval(updateBottomState, 700);
+    window.addEventListener("scroll", handleActivity, { passive: true });
+    window.addEventListener("wheel", handleActivity, { passive: true });
+    window.addEventListener("touchstart", handleActivity, { passive: true });
+    window.addEventListener("pointerdown", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("resize", updateBottomState);
+
+    return () => {
+      window.clearTimeout(initialCheck);
+      window.clearInterval(bottomCheck);
+      window.clearTimeout(browsingTimer);
+      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener("wheel", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      window.removeEventListener("pointerdown", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("resize", updateBottomState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !canAdvance ||
+      !isAtBottom ||
+      isUserBrowsing ||
+      isPaused ||
+      dreamCountdown !== null ||
+      isDreamTransitioning
+    ) {
+      return;
+    }
+
+    const idleTimer = window.setTimeout(() => setDreamCountdown(3), 2600);
+    return () => window.clearTimeout(idleTimer);
+  }, [canAdvance, dreamCountdown, isAtBottom, isDreamTransitioning, isPaused, isUserBrowsing]);
+
+  useEffect(() => {
+    if (dreamCountdown === null || !canAdvance) return;
+
+    if (dreamCountdown > 0) {
+      const countTimer = window.setTimeout(() => {
+        setDreamCountdown((current) => (current === null ? null : current - 1));
+      }, 1000);
+      return () => window.clearTimeout(countTimer);
+    }
+
+    const transitionTimer = window.setTimeout(() => setIsDreamTransitioning(true), 0);
+    const advanceTimer = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % filteredSites.length);
+      setDreamCountdown(null);
+      setIsDreamTransitioning(false);
+    }, 720);
+
+    return () => {
+      window.clearTimeout(transitionTimer);
+      window.clearTimeout(advanceTimer);
+    };
+  }, [canAdvance, dreamCountdown, filteredSites.length]);
+
   const hasUncategorized = sites.some((site) => !site.categorySlug);
   const totalVisits = sites.reduce((sum, site) => sum + site.clickCount, 0);
-  const usedCategoryCount = categories.filter((item) =>
-    sites.some((site) => site.categorySlug === item.slug),
-  ).length + (hasUncategorized ? 1 : 0);
+  const usedCategoryCount =
+    categories.filter((item) => sites.some((site) => site.categorySlug === item.slug)).length +
+    (hasUncategorized ? 1 : 0);
+
+  const activeSite = filteredSites.length
+    ? filteredSites[activeIndex % filteredSites.length]
+    : null;
+  const bookPages = activeSite ? getBookPages(filteredSites, activeIndex) : [];
+
+  const goTo = (index: number) => {
+    if (!filteredSites.length) return;
+    const nextIndex = (index + filteredSites.length) % filteredSites.length;
+    setDreamCountdown(null);
+    setIsDreamTransitioning(false);
+    setActiveIndex(nextIndex);
+  };
+
+  const goToPrevious = () => goTo(activeIndex - 1);
+  const goToNext = () => goTo(activeIndex + 1);
+  const selectCategory = (nextCategory: string) => {
+    setCategory(nextCategory);
+    setActiveIndex(0);
+    setDreamCountdown(null);
+    setIsDreamTransitioning(false);
+  };
 
   return (
-    <main className="directory-shell flex min-h-screen flex-col pb-12">
-      <header className="directory-topbar">
+    <main
+      className={`directory-shell dream-directory-shell flex min-h-screen flex-col pb-10 ${isDreamTransitioning ? "dream-transitioning" : ""}`}
+    >
+      <div className="anime-sky" aria-hidden>
+        <span className="anime-spark anime-spark-one" />
+        <span className="anime-spark anime-spark-two" />
+        <span className="anime-ribbon anime-ribbon-one" />
+        <span className="anime-ribbon anime-ribbon-two" />
+        <span className="anime-moon" />
+      </div>
+
+      <header className="directory-topbar dream-topbar">
         <div className="shell flex items-center justify-between gap-4">
           <BrandMark size="lg" showSubtitle subtitle={dict.brandTag} />
           <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--muted-strong)] sm:inline-flex">
+            <span className="hidden items-center gap-2 rounded-full border border-white/45 bg-white/55 px-3 py-1.5 text-xs font-medium text-[var(--muted-strong)] shadow-sm backdrop-blur sm:inline-flex">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
               {format(dict.home.showing, {
                 shown: sites.length,
@@ -77,160 +230,296 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
         </div>
       </header>
 
-      <section className="shell pt-8">
-        <div className="directory-command">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end">
-            <div>
-              <p className="text-xs font-medium uppercase text-[var(--accent-strong)]">
-                {dict.brandTag}
-              </p>
-              <h1 className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-[40px] md:leading-[1.12]">
-                {dict.home.titleBefore} {dict.home.titleHighlight}
-              </h1>
-              <p className="mt-3 max-w-2xl text-[15px] leading-7 text-[var(--muted)]">
-                {dict.home.subtitle}
-              </p>
-            </div>
+      <section className="dream-hero shell">
+        <div className="dream-hero-copy">
+          <p className="dream-kicker">
+            <Sparkles size={14} aria-hidden />
+            {copy.kicker}
+          </p>
+          <h1>
+            {dict.home.titleBefore}
+            <span>{dict.home.titleHighlight}</span>
+          </h1>
+          <p>{copy.subtitle}</p>
+        </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <StatTile label={dict.home.statSites} value={sites.length} />
-              <StatTile label={dict.home.statCategories} value={usedCategoryCount} />
-              <StatTile label={dict.home.statVisits} value={totalVisits} />
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,390px)_1fr] md:items-center">
-            <label className="relative block w-full">
-              <Search
-                aria-hidden
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-                size={17}
-              />
-              <span className="sr-only">{dict.home.searchPlaceholder}</span>
-              <input
-                className="focus-ring input input-with-icon"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={dict.home.searchPlaceholder}
-              />
-            </label>
-
-            <div className="flex flex-1 flex-wrap gap-2 md:justify-end">
-              <CategoryChip active={category === "all"} onClick={() => setCategory("all")}>
-                {dict.home.all}
-                <Counter>{sites.length}</Counter>
-              </CategoryChip>
-              {categories.map((item) => {
-                const count = sites.filter((site) => site.categorySlug === item.slug).length;
-                if (!count) return null;
-                return (
-                  <CategoryChip
-                    key={item.id}
-                    active={category === item.slug}
-                    onClick={() => setCategory(item.slug)}
-                  >
-                    {item.name}
-                    <Counter>{count}</Counter>
-                  </CategoryChip>
-                );
-              })}
-              {hasUncategorized ? (
-                <CategoryChip
-                  active={category === "uncategorized"}
-                  onClick={() => setCategory("uncategorized")}
-                >
-                  {dict.home.uncategorized}
-                </CategoryChip>
-              ) : null}
-            </div>
-          </div>
+        <div className="dream-stats" aria-label={copy.statsLabel}>
+          <StatTile label={dict.home.statSites} value={sites.length} />
+          <StatTile label={dict.home.statCategories} value={usedCategoryCount} />
+          <StatTile label={dict.home.statVisits} value={totalVisits} />
         </div>
       </section>
 
-      <section className="shell mt-6 flex-1">
-        {filteredSites.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredSites.map((site) => (
-              <SiteCard key={site.id} site={site} dict={dict} />
-            ))}
-          </div>
+      <section
+        className="dream-stage shell"
+        onMouseEnter={() => {
+          setIsPaused(true);
+          setDreamCountdown(null);
+        }}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        {activeSite ? (
+          <>
+            <div className="book-carousel" aria-live="polite">
+              <button
+                className="dream-nav-button"
+                type="button"
+                aria-label={copy.previous}
+                disabled={filteredSites.length <= 1}
+                onClick={goToPrevious}
+              >
+                <ChevronLeft size={22} aria-hidden />
+              </button>
+
+              <div className="book-pages" style={{ perspective: "1400px" }}>
+                {bookPages.map(({ site, position }) => (
+                  <BookCover
+                    key={`${site.id}-${position}`}
+                    site={site}
+                    dict={dict}
+                    locale={locale}
+                    position={position}
+                  />
+                ))}
+              </div>
+
+              <button
+                className="dream-nav-button"
+                type="button"
+                aria-label={copy.next}
+                disabled={filteredSites.length <= 1}
+                onClick={goToNext}
+              >
+                <ChevronRight size={22} aria-hidden />
+              </button>
+            </div>
+
+            <SiteStory
+              key={activeSite.id}
+              site={activeSite}
+              dict={dict}
+              locale={locale}
+              currentIndex={(activeIndex % filteredSites.length) + 1}
+              total={filteredSites.length}
+            />
+
+            {filteredSites.length > 1 ? (
+              <div className="dream-thumbnails" aria-label={copy.pickSite}>
+                {filteredSites.map((site, index) => (
+                  <button
+                    key={site.id}
+                    className={`dream-thumb ${index === activeIndex % filteredSites.length ? "active" : ""}`}
+                    type="button"
+                    aria-label={`${copy.pickSite}: ${site.name}`}
+                    onClick={() => goTo(index)}
+                  >
+                    <CoverEmblem site={site} compact />
+                    <span>{site.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </>
         ) : (
-          <div className="card mt-6 px-8 py-16 text-center">
-            <h2 className="text-xl font-semibold">{dict.home.emptyTitle}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">
-              {query ? dict.home.emptyDescSearch : dict.home.emptyDescNone}
-            </p>
+          <div className="dream-empty">
+            <h2>{dict.home.emptyTitle}</h2>
+            <p>{query ? dict.home.emptyDescSearch : dict.home.emptyDescNone}</p>
           </div>
         )}
-
-        {filteredSites.length ? (
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted)]">
-            <span>
-              {format(dict.home.showing, {
-                shown: filteredSites.length,
-                total: sites.length,
-              })}
-            </span>
-            <span>{format(dict.home.totalVisits, { count: totalVisits })}</span>
-          </div>
-        ) : null}
       </section>
 
-      <footer className="shell mt-16 flex flex-col items-start justify-between gap-2 border-t border-[var(--line)] pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center">
+      <section className="dream-controls shell">
+        <label className="dream-search focus-within">
+          <Search
+            aria-hidden
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            size={17}
+          />
+          <span className="sr-only">{dict.home.searchPlaceholder}</span>
+          <input
+            className="focus-ring"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActiveIndex(0);
+              setDreamCountdown(null);
+              setIsDreamTransitioning(false);
+            }}
+            placeholder={dict.home.searchPlaceholder}
+          />
+        </label>
+
+        <div className="dream-category-strip">
+          <CategoryChip active={category === "all"} onClick={() => selectCategory("all")}>
+            {dict.home.all}
+            <Counter>{sites.length}</Counter>
+          </CategoryChip>
+          {categories.map((item) => {
+            const count = sites.filter((site) => site.categorySlug === item.slug).length;
+            if (!count) return null;
+            return (
+              <CategoryChip
+                key={item.id}
+                active={category === item.slug}
+                onClick={() => selectCategory(item.slug)}
+              >
+                {item.name}
+                <Counter>{count}</Counter>
+              </CategoryChip>
+            );
+          })}
+          {hasUncategorized ? (
+            <CategoryChip
+              active={category === "uncategorized"}
+              onClick={() => selectCategory("uncategorized")}
+            >
+              {dict.home.uncategorized}
+            </CategoryChip>
+          ) : null}
+        </div>
+      </section>
+
+      <footer className="shell mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/50 pt-6 text-xs text-[var(--muted)] sm:flex-row sm:items-center">
         <span>{format(dict.home.footer.copyright, { year: new Date().getFullYear() })}</span>
-        <span>{dict.home.footer.tagline}</span>
+        <span>{format(dict.home.showing, { shown: filteredSites.length, total: sites.length })}</span>
       </footer>
+
+      {dreamCountdown !== null || isDreamTransitioning ? (
+        <div className="dream-countdown-overlay" role="status" aria-live="polite">
+          <div className="dream-countdown-card">
+            <span className="dream-countdown-rune" aria-hidden>
+              ✦
+            </span>
+            <p>{copy.dreamCountdown}</p>
+            <strong>{dreamCountdown && dreamCountdown > 0 ? dreamCountdown : copy.dreamNow}</strong>
+          </div>
+        </div>
+      ) : null}
     </main>
+  );
+}
+
+function BookCover({
+  site,
+  dict,
+  locale,
+  position,
+}: {
+  site: DirectorySite;
+  dict: Dictionary;
+  locale: Locale;
+  position: BookPage["position"];
+}) {
+  const categoryLabel = site.categoryName || dict.home.uncategorized;
+  const style = {
+    "--cover-bg": pickCoverGradient(site.slug || site.name),
+  } as CSSProperties;
+
+  return (
+    <a
+      className={`book-cover ${position}`}
+      href={`/go/${site.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={style}
+      aria-label={`${getDirectoryCopy(locale).openSite}: ${site.name}`}
+    >
+      <span className="book-spine" aria-hidden />
+      <span className="book-cover-glass" aria-hidden />
+      <span className="book-category">{categoryLabel}</span>
+      <CoverEmblem site={site} />
+      <span className="book-title">{site.name}</span>
+      <span className="book-url">{formatUrl(site.url)}</span>
+    </a>
+  );
+}
+
+function CoverEmblem({ site, compact = false }: { site: DirectorySite; compact?: boolean }) {
+  const [loaded, setLoaded] = useState(false);
+  const letter = (site.name.trim().slice(0, 1) || "?").toUpperCase();
+
+  return (
+    <span className={`cover-emblem ${compact ? "compact" : ""}`}>
+      <span aria-hidden className="cover-letter">
+        {letter}
+      </span>
+      {site.iconUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt=""
+          aria-hidden
+          src={site.iconUrl}
+          className="cover-icon"
+          style={{ opacity: loaded ? 1 : 0 }}
+          onLoad={(event) => {
+            const target = event.currentTarget;
+            if (target.naturalWidth >= 16 && target.naturalHeight >= 16) {
+              setLoaded(true);
+            }
+          }}
+          onError={() => setLoaded(false)}
+        />
+      ) : null}
+    </span>
+  );
+}
+
+function SiteStory({
+  site,
+  dict,
+  locale,
+  currentIndex,
+  total,
+}: {
+  site: DirectorySite;
+  dict: Dictionary;
+  locale: Locale;
+  currentIndex: number;
+  total: number;
+}) {
+  const copy = getDirectoryCopy(locale);
+  const categoryLabel = site.categoryName || dict.home.uncategorized;
+
+  return (
+    <article className="dream-story">
+      <div className="dream-story-meta">
+        <span>{String(currentIndex).padStart(2, "0")}</span>
+        <span>/</span>
+        <span>{String(total).padStart(2, "0")}</span>
+        <span>{categoryLabel}</span>
+      </div>
+      <div>
+        <h2>{site.name}</h2>
+        <p>{site.description || dict.home.noDescription}</p>
+      </div>
+      <div className="dream-story-actions">
+        <a
+          className="dream-visit-button"
+          href={`/go/${site.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {copy.openSite}
+          <ArrowUpRight size={17} aria-hidden />
+        </a>
+        <span className="dream-story-url">{formatUrl(site.url)}</span>
+        <span className="dream-story-visits">
+          <Eye size={14} aria-hidden />
+          {format(dict.home.visits, { count: site.clickCount })}
+        </span>
+      </div>
+    </article>
   );
 }
 
 function StatTile({ label, value }: { label: string; value: number }) {
   return (
-    <div className="stat-tile">
+    <div className="stat-tile dream-stat-tile">
       <div className="text-[11px] font-medium uppercase text-[var(--muted)]">{label}</div>
-      <div className="mt-1 text-2xl font-semibold tracking-tight tabular-nums text-[var(--foreground)]">
+      <div className="mt-1 text-2xl font-semibold tabular-nums text-[var(--foreground)]">
         {value.toLocaleString()}
       </div>
     </div>
-  );
-}
-
-function SiteCard({ site, dict }: { site: DirectorySite; dict: Dictionary }) {
-  const categoryLabel = site.categoryName || dict.home.uncategorized;
-  return (
-    <a className="site-card group" href={`/go/${site.slug}`} rel="noreferrer">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} />
-          <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-[var(--foreground)]">
-              {site.name}
-            </h2>
-            <p className="mt-0.5 truncate text-xs text-[var(--muted)]">
-              {formatUrl(site.url)}
-            </p>
-          </div>
-        </div>
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-muted)] text-[var(--muted)] transition group-hover:border-[var(--accent)] group-hover:bg-[var(--accent)] group-hover:text-white">
-          <ArrowUpRight size={15} aria-hidden />
-        </span>
-      </div>
-
-      <p className="mt-4 line-clamp-3 min-h-[4.25rem] text-sm leading-6 text-[var(--muted)]">
-        {site.description || dict.home.noDescription}
-      </p>
-
-      <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-4 text-xs">
-        <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--accent-soft)] px-2.5 py-1 font-medium text-[var(--accent-strong)]">
-          {categoryLabel}
-        </span>
-        <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-[var(--muted-strong)]">
-          <Eye size={13} aria-hidden />
-          {site.clickCount.toLocaleString()}
-          <span className="sr-only">{dict.home.visitCardLabel}</span>
-        </span>
-      </div>
-    </a>
   );
 }
 
@@ -245,7 +534,7 @@ function CategoryChip({
 }) {
   return (
     <button
-      className={`focus-ring chip ${active ? "active" : ""}`}
+      className={`focus-ring chip dream-chip ${active ? "active" : ""}`}
       type="button"
       onClick={onClick}
     >
@@ -260,6 +549,60 @@ function Counter({ children }: { children: React.ReactNode }) {
       {children}
     </span>
   );
+}
+
+function getBookPages(sites: DirectorySite[], activeIndex: number): BookPage[] {
+  if (sites.length === 1) {
+    return [{ site: sites[0], position: "active" }];
+  }
+
+  const active = activeIndex % sites.length;
+  const offsets = sites.length === 2 ? [0, 1] : [-1, 0, 1];
+
+  return offsets.map((offset) => {
+    const index = (active + offset + sites.length) % sites.length;
+    return {
+      site: sites[index],
+      position: offset < 0 ? "previous" : offset > 0 ? "next" : "active",
+    };
+  });
+}
+
+function pickCoverGradient(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return COVER_GRADIENTS[hash % COVER_GRADIENTS.length];
+}
+
+function getDirectoryCopy(locale: Locale) {
+  if (locale === "en") {
+    return {
+      kicker: "Dream portal",
+      subtitle:
+        "Flip through every hosted site as a glowing page, then open the destination that fits the moment.",
+      statsLabel: "Directory statistics",
+      previous: "Previous site",
+      next: "Next site",
+      openSite: "Open site",
+      pickSite: "Choose site",
+      dreamCountdown: "Entering the next dream in",
+      dreamNow: "Now",
+    };
+  }
+
+  return {
+    kicker: "梦境入口",
+    subtitle: "像翻开一本微光图册一样浏览每个站点，封面切换时简介、链接与访问数据同步浮现。",
+    statsLabel: "站点统计",
+    previous: "上一个站点",
+    next: "下一个站点",
+    openSite: "进入网站",
+    pickSite: "选择站点",
+    dreamCountdown: "即将进入下一个梦幻",
+    dreamNow: "启程",
+  };
 }
 
 function formatUrl(url: string) {
