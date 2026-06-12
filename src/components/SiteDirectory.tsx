@@ -69,7 +69,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isUserBrowsing, setIsUserBrowsing] = useState(false);
-  const [hasUserBrowsed, setHasUserBrowsed] = useState(false);
   const [lastActivityAt, setLastActivityAt] = useState(() => Date.now());
   const [isDreamTransitioning, setIsDreamTransitioning] = useState(false);
   const copy = getDirectoryCopy(locale);
@@ -107,7 +106,6 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
 
     const markBrowsing = () => {
       setIsUserBrowsing(true);
-      setHasUserBrowsed(true);
       setLastActivityAt(Date.now());
       setIsDreamTransitioning(false);
       window.clearTimeout(browsingTimer);
@@ -133,7 +131,7 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
   }, []);
 
   useEffect(() => {
-    if (!canAdvance || !hasUserBrowsed || isDreamTransitioning) {
+    if (!canAdvance || isDreamTransitioning) {
       return;
     }
 
@@ -160,7 +158,7 @@ export function SiteDirectory({ categories, sites, dict, locale }: SiteDirectory
       window.clearInterval(idleCheck);
       window.clearTimeout(advanceTimer);
     };
-  }, [canAdvance, filteredSites.length, hasUserBrowsed, isDreamTransitioning, lastActivityAt]);
+  }, [canAdvance, filteredSites.length, isDreamTransitioning, lastActivityAt]);
 
   const hasUncategorized = sites.some((site) => !site.categorySlug);
   const totalVisits = sites.reduce((sum, site) => sum + site.clickCount, 0);
