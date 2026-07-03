@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { getActiveDictionary } from "@/lib/locale";
 import "./globals.css";
 
@@ -7,6 +7,13 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,7 +35,7 @@ export default async function RootLayout({
 }>) {
   const { locale } = await getActiveDictionary();
   return (
-    <html lang={locale === "zh" ? "zh-CN" : "en"} className={inter.variable}>
+    <html lang={locale === "zh" ? "zh-CN" : "en"} className={`${inter.variable} ${fraunces.variable}`}>
       <body>{children}</body>
     </html>
   );

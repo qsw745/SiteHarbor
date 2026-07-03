@@ -42,9 +42,12 @@ export function SiteAvatar({
   slug: string;
   size?: Size;
 }) {
-  const [loaded, setLoaded] = useState(false);
+  const [hasIconError, setHasIconError] = useState(false);
   const gradient = pickGradient(slug || name || "x");
-  const letter = (name.trim().slice(0, 1) || "?").toUpperCase();
+  const identity = `${slug} ${name}`.toLowerCase();
+  const displayIconUrl =
+    iconUrl || (identity.includes("siteharbor") ? "/brand/siteharbor-icon.png" : null);
+  const showIcon = Boolean(displayIconUrl && !hasIconError);
 
   return (
     <span
@@ -53,26 +56,18 @@ export function SiteAvatar({
       <span aria-hidden className="absolute inset-0" style={{ background: gradient }} />
       <span
         aria-hidden
-        className="relative font-semibold text-white"
-        style={{ textShadow: "0 1px 2px rgba(0,0,0,0.18)" }}
-      >
-        {letter}
-      </span>
-      {iconUrl ? (
+        className="relative h-3 w-3 rounded-[4px] border border-white/70 bg-white/45 shadow-sm"
+      />
+      {displayIconUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           alt=""
           aria-hidden
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
-          style={{ opacity: loaded ? 1 : 0, background: "white" }}
-          src={iconUrl}
-          onLoad={(event) => {
-            const target = event.currentTarget;
-            if (target.naturalWidth >= 16 && target.naturalHeight >= 16) {
-              setLoaded(true);
-            }
-          }}
-          onError={() => setLoaded(false)}
+          className="absolute inset-0 h-full w-full object-contain p-1 transition-opacity duration-200"
+          style={{ opacity: showIcon ? 1 : 0, background: "white" }}
+          src={displayIconUrl}
+          onLoad={() => setHasIconError(false)}
+          onError={() => setHasIconError(true)}
         />
       ) : null}
     </span>

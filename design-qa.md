@@ -5,7 +5,8 @@
 - Viewport: `1440x1024`
 - State: authenticated `/admin/sites`, local SQLite demo data
 - Full-view comparison evidence: `docs/design/qa/siteharbor-admin-comparison.png`
-- Focused region comparison evidence: not needed for this pass; the main fidelity risks were global layout, brand asset placement, admin/editor proportions, and responsive control wrapping, all visible in the full desktop capture. Mobile responsive evidence: `docs/design/qa/siteharbor-public-mobile-390x844.png`
+- Focused region comparison evidence: not needed for this pass; the main fidelity risks were global layout, brand asset placement, admin/editor proportions, and responsive control wrapping, all visible in the full desktop capture.
+- Public portal carousel evidence: `docs/design/qa/siteharbor-public-desktop-1440x1024.png` and `docs/design/qa/siteharbor-public-mobile-390x844.png`
 
 **Findings**
 
@@ -19,6 +20,7 @@
 
 - Real generated harbor app icon is used in the product chrome and metadata.
 - Public portal uses the Harbor Control palette, brand lockup, grouped command surface, stable stats, search, category chips, and scan-friendly site cards.
+- Public portal now uses the Harbor Manifest layout: serif editorial masthead with accent-italic highlight, ledger-style stats with dotted leaders, search + category chip controls under a labelled rule, a featured (most-visited) site card with gradient cover and curated narrative, and a numbered manifest grid where every card keeps icon, host path, description, category tag, and visit heat together.
 - Admin shell uses the new brand lockup, sea-teal active navigation, status panel, top command bar, metric panels, grouped site editing rows, right-side editor, and public page preview.
 - Login screen uses the new brand lockup and updated surface treatment.
 - Desktop and mobile screenshots were captured for visible layout checks.
