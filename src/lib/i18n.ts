@@ -111,10 +111,30 @@ export type Dictionary = {
   login: {
     title: string;
     subtitle: string;
+    usernameLabel: string;
+    usernamePlaceholder: string;
     passwordLabel: string;
     passwordPlaceholder: string;
+    forgotPassword: string;
     submit: string;
     submitting: string;
+  };
+
+  resetPassword: {
+    title: string;
+    subtitle: string;
+    tokenLabel: string;
+    tokenPlaceholder: string;
+    usernameLabel: string;
+    usernamePlaceholder: string;
+    passwordLabel: string;
+    passwordPlaceholder: string;
+    confirmPasswordLabel: string;
+    confirmPasswordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    backToLogin: string;
+    help: string;
   };
 
   metadata: {
@@ -228,11 +248,31 @@ const zh: Dictionary = {
 
   login: {
     title: "管理员登录",
-    subtitle: "登录后可维护站点入口、分类、排序与显示状态。",
+    subtitle: "使用管理员账号进入控制台，维护站点入口、分类、排序与显示状态。",
+    usernameLabel: "用户名",
+    usernamePlaceholder: "输入管理员用户名",
     passwordLabel: "管理员密码",
     passwordPlaceholder: "输入管理员密码",
+    forgotPassword: "忘记密码？使用一次性重置口令",
     submit: "登录后台",
     submitting: "登录中",
+  },
+
+  resetPassword: {
+    title: "重置管理员密码",
+    subtitle: "输入服务器生成的一次性重置口令，然后设置新的用户名和密码。",
+    tokenLabel: "一次性重置口令",
+    tokenPlaceholder: "粘贴服务器生成的重置口令",
+    usernameLabel: "新用户名",
+    usernamePlaceholder: "例如 admin",
+    passwordLabel: "新密码",
+    passwordPlaceholder: "至少 12 位，建议使用密码管理器生成",
+    confirmPasswordLabel: "确认新密码",
+    confirmPasswordPlaceholder: "再次输入新密码",
+    submit: "重置并返回登录",
+    submitting: "重置中",
+    backToLogin: "返回登录",
+    help: "重置口令需要在服务器上生成，默认 30 分钟有效且只能使用一次。",
   },
 
   metadata: {
@@ -255,9 +295,18 @@ const zh: Dictionary = {
     "err-category-conflict": "分类名称或 Slug 已存在。",
     "err-discovery-empty": "没有发现可导入的网站，请确认服务器已挂载 Nginx 配置目录。",
     "err-form-invalid": "表单内容无效。",
+    "err-username-required": "请输入用户名。",
+    "err-login-invalid": "用户名或密码不正确。",
     "err-password-required": "请输入管理员密码。",
     "err-password-invalid": "密码不正确。",
     "err-password-unconfigured": "后台还没有完成管理员密码配置。",
+    "err-reset-token-required": "请输入一次性重置口令。",
+    "err-reset-token-invalid": "重置口令无效或已使用。",
+    "err-reset-token-expired": "重置口令已过期，请在服务器重新生成。",
+    "err-reset-username-invalid": "用户名至少 3 位，只能包含字母、数字、点、下划线和短横线。",
+    "err-reset-password-short": "新密码至少需要 12 位。",
+    "err-reset-password-mismatch": "两次输入的新密码不一致。",
+    "password-reset": "管理员账号已重置，请使用新用户名和密码登录。",
     "err-name-required": "站点名称不能为空。",
     "err-name-too-long": "站点名称最长 80 个字符。",
     "err-category-name-required": "分类名称不能为空。",
@@ -374,11 +423,31 @@ const en: Dictionary = {
 
   login: {
     title: "Admin sign in",
-    subtitle: "Sign in to maintain site entries, categories, sort order and visibility.",
+    subtitle: "Use the admin account to maintain site entries, categories, order and visibility.",
+    usernameLabel: "Username",
+    usernamePlaceholder: "Enter the admin username",
     passwordLabel: "Admin password",
     passwordPlaceholder: "Enter the admin password",
+    forgotPassword: "Forgot password? Use a one-time reset token",
     submit: "Sign in",
     submitting: "Signing in…",
+  },
+
+  resetPassword: {
+    title: "Reset admin password",
+    subtitle: "Enter a one-time token generated on the server, then set a new username and password.",
+    tokenLabel: "One-time reset token",
+    tokenPlaceholder: "Paste the reset token generated on the server",
+    usernameLabel: "New username",
+    usernamePlaceholder: "For example, admin",
+    passwordLabel: "New password",
+    passwordPlaceholder: "At least 12 characters; use a password manager",
+    confirmPasswordLabel: "Confirm new password",
+    confirmPasswordPlaceholder: "Enter the new password again",
+    submit: "Reset and return to sign in",
+    submitting: "Resetting…",
+    backToLogin: "Back to sign in",
+    help: "Reset tokens must be generated on the server. They expire after 30 minutes and can be used once.",
   },
 
   metadata: {
@@ -403,9 +472,19 @@ const en: Dictionary = {
     "err-discovery-empty":
       "No sites discovered. Make sure the Nginx config directory is mounted.",
     "err-form-invalid": "Form input is invalid.",
+    "err-username-required": "Please enter the username.",
+    "err-login-invalid": "Incorrect username or password.",
     "err-password-required": "Please enter the admin password.",
     "err-password-invalid": "Incorrect password.",
     "err-password-unconfigured": "The admin password has not been configured yet.",
+    "err-reset-token-required": "Please enter the one-time reset token.",
+    "err-reset-token-invalid": "The reset token is invalid or has already been used.",
+    "err-reset-token-expired": "The reset token has expired. Generate a new one on the server.",
+    "err-reset-username-invalid":
+      "Username must be at least 3 characters and may contain letters, digits, dots, underscores and dashes.",
+    "err-reset-password-short": "The new password must be at least 12 characters.",
+    "err-reset-password-mismatch": "The new passwords do not match.",
+    "password-reset": "The admin account has been reset. Sign in with the new username and password.",
     "err-name-required": "Name is required.",
     "err-name-too-long": "Name must be 80 characters or fewer.",
     "err-category-name-required": "Category name is required.",

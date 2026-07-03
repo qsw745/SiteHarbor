@@ -1,25 +1,25 @@
-import { LoginForm } from "./LoginForm";
+import { ResetPasswordForm } from "./ResetPasswordForm";
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getActiveDictionary } from "@/lib/locale";
-import { messageFromParams, resolveMessage } from "@/lib/messages";
 import { getAdminSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-type LoginPageProps = {
+type ResetPasswordPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
   const authed = await getAdminSession();
   if (authed) {
     redirect("/admin/sites");
   }
 
   const params = await searchParams;
-  const { ok } = messageFromParams(params);
+  const tokenParam = params?.token;
+  const initialToken = Array.isArray(tokenParam) ? tokenParam[0] ?? "" : tokenParam ?? "";
   const { dict, locale } = await getActiveDictionary();
 
   return (
@@ -29,19 +29,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <BrandMark size="md" />
           <LanguageSwitcher current={locale} />
         </div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">{dict.login.title}</h1>
-        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{dict.login.subtitle}</p>
-        {ok ? <div className="message-ok mt-5">{resolveMessage(dict, ok, params)}</div> : null}
-        <LoginForm
-          labels={{
-            usernameLabel: dict.login.usernameLabel,
-            usernamePlaceholder: dict.login.usernamePlaceholder,
-            passwordLabel: dict.login.passwordLabel,
-            passwordPlaceholder: dict.login.passwordPlaceholder,
-            forgotPassword: dict.login.forgotPassword,
-            submit: dict.login.submit,
-            submitting: dict.login.submitting,
-          }}
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight">
+          {dict.resetPassword.title}
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+          {dict.resetPassword.subtitle}
+        </p>
+        <ResetPasswordForm
+          initialToken={initialToken}
+          labels={dict.resetPassword}
           messages={dict.messages}
         />
       </section>

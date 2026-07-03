@@ -37,8 +37,12 @@ model Site {
 }
 
 model AdminAccount {
-  id           String   @id
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String    @id
+  username            String    @unique @default("admin")
+  passwordHash        String
+  sessionVersion      Int       @default(0)
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }

@@ -379,7 +379,7 @@ function PublicPreview({ sites, dict }: { sites: SiteRowSite[]; dict: Dictionary
             {dict.sites.publicPreviewTitle}
           </h3>
         </div>
-        <a className="btn-secondary" href="/" target="_blank">
+        <a className="btn-secondary" href="/" target="_blank" rel="noopener noreferrer">
           {dict.viewHomepage}
           <SquareArrowOutUpRight size={14} aria-hidden />
         </a>
@@ -395,7 +395,13 @@ function PublicPreview({ sites, dict }: { sites: SiteRowSite[]; dict: Dictionary
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {sites.slice(0, 4).map((site) => (
-            <a className="preview-site-card" href={`/go/${site.slug}`} key={site.id}>
+            <a
+              className="preview-site-card"
+              href={`/go/${site.slug}`}
+              key={site.id}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} size="sm" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold">{site.name}</span>

@@ -141,6 +141,17 @@ This drastically reduces inflation from refresh spam, Chrome's link-prefetch, an
 
 Use `npm run reset-admin-password -- "<password>"` to create or reset the persisted admin password. If you keep `ADMIN_PASSWORD_HASH` for old deployments, wrap the bcrypt hash in single quotes so Docker Compose does not try to interpolate `$2b$...`.
 
+## Environment Separation
+
+Local development and production are two separate environments:
+
+- Local source runs against `data/siteharbor.db` through `DATABASE_URL="file:../data/siteharbor.db"`.
+- Local Docker runs against a local Docker volume named `siteharbor-data`, mounted inside the container at `/app/data`.
+- Production runs on the server's own `siteharbor-data` Docker volume under `/opt/siteharbor`; it is not shared with the local machine.
+- Local Nginx discovery can import production-domain URLs from mirrored files in `deploy/nginx-conf.d`, so a local `/go/<slug>` request may redirect the browser to `https://qisw.top/...`. The redirect target can be production while the SiteHarbor admin edits and click counts still write only to the local database/volume.
+
+Use this workflow: change locally, test against the local source or local Docker environment, then deploy with `./scripts/deploy-image.sh` after verification.
+
 ## Local Development
 
 ```bash
