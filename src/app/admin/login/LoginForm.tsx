@@ -43,7 +43,7 @@ export function LoginForm({
           />
           <input
             autoComplete="username"
-            className="admin-field pl-9"
+            className="admin-field input-with-icon"
             name="username"
             placeholder={labels.usernamePlaceholder}
             type="text"
@@ -61,7 +61,7 @@ export function LoginForm({
           />
           <input
             autoComplete="current-password"
-            className="admin-field pl-9"
+            className="admin-field input-with-icon"
             name="password"
             placeholder={labels.passwordPlaceholder}
             type="password"

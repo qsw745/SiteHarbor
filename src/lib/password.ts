@@ -69,6 +69,10 @@ async function getAdminAccount() {
   return seedAdminPasswordFromEnv();
 }
 
+// Not a secret: burns the same bcrypt cost on unknown usernames so response
+// timing does not reveal whether the submitted username exists.
+const TIMING_DUMMY_HASH = "$2b$12$Q5Jbn3bnnfmeWZXZztBuY.WH9LG7z/4wrBovr02jxdiSerCPomJsu";
+
 export async function verifyAdminLogin(
   username: string,
   password: string,
@@ -76,12 +80,12 @@ export async function verifyAdminLogin(
   const account = await getAdminAccount();
   if (!account?.passwordHash) return "unconfigured";
 
-  if (normalizeAdminUsername(username) !== account.username) {
-    return "invalid";
-  }
+  const usernameMatches = normalizeAdminUsername(username) === account.username;
+  const compareHash = usernameMatches ? account.passwordHash : TIMING_DUMMY_HASH;
 
   try {
-    return (await bcrypt.compare(password, account.passwordHash)) ? "valid" : "invalid";
+    const passwordMatches = await bcrypt.compare(password, compareHash);
+    return usernameMatches && passwordMatches ? "valid" : "invalid";
   } catch {
     return "invalid";
   }

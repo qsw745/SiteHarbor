@@ -36,7 +36,7 @@ export function ResetPasswordForm({
           />
           <input
             autoComplete="one-time-code"
-            className="admin-field pl-9"
+            className="admin-field input-with-icon"
             defaultValue={initialToken}
             name="token"
             placeholder={labels.tokenPlaceholder}
@@ -55,7 +55,7 @@ export function ResetPasswordForm({
           />
           <input
             autoComplete="username"
-            className="admin-field pl-9"
+            className="admin-field input-with-icon"
             name="username"
             placeholder={labels.usernamePlaceholder}
             type="text"
@@ -73,7 +73,7 @@ export function ResetPasswordForm({
           />
           <input
             autoComplete="new-password"
-            className="admin-field pl-9"
+            className="admin-field input-with-icon"
             name="password"
             placeholder={labels.passwordPlaceholder}
             type="password"

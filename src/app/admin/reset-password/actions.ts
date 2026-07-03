@@ -1,8 +1,13 @@
 "use server";
 
 import { resetAdminPasswordWithToken } from "@/lib/password";
+import { clearFailures, clientIpFrom, isRateLimited, registerFailure } from "@/lib/rate-limit";
 import { clearAdminSession } from "@/lib/session";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+const RESET_FAILURE_LIMIT = 5;
+const RESET_FAILURE_WINDOW_MS = 15 * 60 * 1000;
 
 export type ResetPasswordState = {
   error: string;
@@ -29,6 +34,11 @@ export async function resetPasswordAction(
     return { error: "err-form-invalid" };
   }
 
+  const rateKey = `reset:${clientIpFrom(await headers())}`;
+  if (isRateLimited(rateKey, RESET_FAILURE_LIMIT, RESET_FAILURE_WINDOW_MS)) {
+    return { error: "err-too-many-attempts" };
+  }
+
   const result = await resetAdminPasswordWithToken({
     token,
     username,
@@ -37,8 +47,13 @@ export async function resetPasswordAction(
   });
 
   if (result === "valid") {
+    clearFailures(rateKey);
     await clearAdminSession();
     redirect("/admin/login?ok=password-reset");
+  }
+
+  if (result === "invalid" || result === "expired") {
+    registerFailure(rateKey, RESET_FAILURE_WINDOW_MS);
   }
 
   const errors: Record<Exclude<typeof result, "valid">, string> = {

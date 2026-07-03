@@ -367,6 +367,9 @@ For `qisw.top` the scanner also enumerates top-level `location /<segment>/` bloc
 - Use a long, random `SESSION_SECRET`.
 - Admin password hashes are stored in SQLite and should be reset through `reset-admin-password`. Keep old `ADMIN_PASSWORD_HASH` values out of Git.
 - The session cookie is marked `Secure` only when `NODE_ENV=production` **and** `NEXT_PUBLIC_APP_URL` starts with `https://`.
+- Login and reset-token submissions are rate limited in memory per client IP (10 login failures / 5 reset failures per 15 minutes); counters reset on success or process restart.
+- `verifyAdminLogin` runs a dummy bcrypt compare when the username does not match, so response timing does not reveal whether a username exists.
+- `next.config.ts` sets security headers on every response: CSP (self-only scripts, `img-src https:` for favicons, `frame-ancestors 'none'`), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, and HSTS.
 - Production HTTPS currently uses <https://qisw.top/>.
 - The GitHub repository is public because no production secrets or data are committed; double-check before adding new files.
 

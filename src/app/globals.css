@@ -237,15 +237,38 @@ button {
 
 .login-surface {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(246, 250, 249, 0.92)),
-    var(--background);
+    radial-gradient(900px 420px at 82% -8%, rgba(15, 143, 134, 0.12), transparent 60%),
+    radial-gradient(720px 380px at -6% 100%, rgba(244, 201, 93, 0.1), transparent 55%),
+    linear-gradient(180deg, #fbfdfc 0%, var(--background) 52%, #eff6f4 100%);
 }
 
 .login-card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 20px 56px rgba(16, 32, 44, 0.1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(16, 32, 44, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 60px rgba(16, 32, 44, 0.12);
+}
+
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #77d4cf 55%, transparent);
+}
+
+/* Keep Chrome/Safari autofill from painting inputs pale blue. */
+.admin-field:-webkit-autofill,
+.admin-field:-webkit-autofill:hover,
+.admin-field:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+  transition: background-color 9999s ease-out;
 }
 
 .admin-shell {
