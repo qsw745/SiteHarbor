@@ -243,7 +243,7 @@ function FeaturedCard({
       >
         <span className="harbor-featured-glass" aria-hidden />
         <span className="harbor-featured-flag">{copy.featuredLabel}</span>
-        <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} size="lg" />
+        <SiteAvatar iconUrl={site.iconUrl} name={site.name} slug={site.slug} size="xl" />
         <span className="harbor-featured-name">{site.name}</span>
         <span className="harbor-featured-host">{formatUrl(site.url)}</span>
       </a>
