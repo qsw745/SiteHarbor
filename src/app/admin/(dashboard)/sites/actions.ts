@@ -4,11 +4,14 @@ import { adminPath } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { discoverServerSites } from "@/lib/site-discovery";
+import { isUsableIcon, mapWithLimit, resolveSiteIcon, resolveSiteIcons } from "@/lib/site-icon";
 import { normalizeSlug } from "@/lib/slug";
 import { firstZodError, formString, siteFormSchema } from "@/lib/validation";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+const ICON_CONCURRENCY = 4;
 
 function parseSiteForm(formData: FormData) {
   const name = formString(formData, "name");
@@ -140,11 +143,18 @@ export async function syncDiscoveredSitesAction() {
   });
   const existingByUrl = new Map(existingSites.map((site) => [canonicalUrl(site.url), site]));
   const usedSlugs = new Set(existingSites.map((site) => site.slug));
+
+  const urlsNeedingIcon = discoveredSites
+    .filter((discovered) => !existingByUrl.get(canonicalUrl(discovered.url))?.iconUrl)
+    .map((discovered) => discovered.url);
+  const resolvedIcons = await resolveSiteIcons(urlsNeedingIcon);
+
   let created = 0;
   let updated = 0;
 
   for (const discovered of discoveredSites) {
     const existing = existingByUrl.get(canonicalUrl(discovered.url));
+    const resolvedIcon = resolvedIcons.get(discovered.url) ?? null;
 
     if (existing) {
       const updateData: Prisma.SiteUpdateInput = {
@@ -153,7 +163,7 @@ export async function syncDiscoveredSitesAction() {
       };
 
       if (!existing.description) updateData.description = discovered.description;
-      if (!existing.iconUrl) updateData.iconUrl = discovered.iconUrl;
+      if (!existing.iconUrl && resolvedIcon) updateData.iconUrl = resolvedIcon;
 
       await prisma.site.update({
         where: { id: existing.id },
@@ -171,7 +181,7 @@ export async function syncDiscoveredSitesAction() {
         active: true,
         categoryId: category.id,
         description: discovered.description,
-        iconUrl: discovered.iconUrl,
+        iconUrl: resolvedIcon,
         name: discovered.name,
         slug,
         sortOrder: discovered.sortOrder,
@@ -186,6 +196,55 @@ export async function syncDiscoveredSitesAction() {
     ok: "discovery-synced",
     created: String(created),
     updated: String(updated),
+  });
+}
+
+/**
+ * Re-resolve icons from each site's own page. Icons that still load are kept as
+ * they are; missing or dead ones are repaired, and dead ones that cannot be
+ * repaired are cleared so the avatar falls back to its letter mark.
+ */
+export async function refreshSiteIconsAction() {
+  await requireAdmin();
+  const sites = await prisma.site.findMany({
+    select: { iconUrl: true, id: true, url: true },
+  });
+
+  if (!sites.length) {
+    redirectToSites({ error: "err-icons-no-sites" });
+  }
+
+  const stillWorking = await mapWithLimit(sites, ICON_CONCURRENCY, (site) =>
+    site.iconUrl ? isUsableIcon(site.iconUrl) : Promise.resolve(false),
+  );
+
+  const brokenSites = sites.filter((_, index) => !stillWorking[index]);
+  const resolvedIcons = await mapWithLimit(brokenSites, ICON_CONCURRENCY, (site) =>
+    resolveSiteIcon(site.url),
+  );
+
+  let repaired = 0;
+  let cleared = 0;
+
+  for (const [index, site] of brokenSites.entries()) {
+    const iconUrl = resolvedIcons[index];
+    if (iconUrl === site.iconUrl) continue;
+
+    await prisma.site.update({
+      where: { id: site.id },
+      data: { iconUrl },
+    });
+
+    if (iconUrl) repaired += 1;
+    else cleared += 1;
+  }
+
+  revalidatePath("/");
+  redirectToSites({
+    ok: "icons-refreshed",
+    repaired: String(repaired),
+    cleared: String(cleared),
+    kept: String(sites.length - repaired - cleared),
   });
 }
 

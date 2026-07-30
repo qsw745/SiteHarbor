@@ -137,6 +137,7 @@ This drastically reduces inflation from refresh spam, Chrome's link-prefetch, an
 | `NEXT_PUBLIC_APP_URL`  | yes      | Public origin; in production `https://qisw.top`. Controls whether the session cookie is `Secure`.        |
 | `DISCOVERY_NGINX_CONF_DIR` | no   | Directory the admin "scan Nginx" button reads. In production this is `/host/nginx/conf.d` (mounted RO). If unset, the app also checks `deploy/nginx-conf.d` for local testing. |
 | `SITE_DISCOVERY_NGINX_CONF_DIR` | no | Alias for the above; either is accepted.                                                            |
+| `SELF_SITE_URLS`       | no       | Extra origins/paths that mean "this portal", comma separated. Entries matching `NEXT_PUBLIC_APP_URL` or this list are hidden from the public directory and skipped by the Nginx scan. Local runs against production-mirrored data set it to `https://qisw.top`. |
 | `ADMIN_PASSWORD_HASH`  | no       | Optional legacy/bootstrap seed. If `AdminAccount` is empty, the app imports this hash into SQLite.       |
 
 Use `npm run reset-admin-password -- "<password>"` to create or reset the persisted admin password. If you keep `ADMIN_PASSWORD_HASH` for old deployments, wrap the bcrypt hash in single quotes so Docker Compose does not try to interpolate `$2b$...`.
@@ -344,6 +345,21 @@ The admin "扫描 Nginx 配置" button reads every `*.conf` file under `DISCOVER
 - Have a public, non-wildcard, non-IP `server_name`
 
 For `qisw.top` the scanner also enumerates top-level `location /<segment>/` blocks, skipping internal paths like `/_next/`, `/api/`, `/admin`, `/clipboard/`, etc. Discovered URLs are inserted into category `产品网站`, deduped by URL. Known URLs get curated names/descriptions from `KNOWN_SITE_DETAILS` in `src/lib/site-discovery.ts` — extend that map if you add more first-party products.
+
+SiteHarbor's own entry is never imported and never listed publicly: `isSelfSiteUrl()` in `src/lib/self-site.ts` matches sites against `NEXT_PUBLIC_APP_URL` and `SELF_SITE_URLS`.
+
+## Site Icon Resolution
+
+The admin "刷新站点图标" button (`refreshSiteIconsAction`) repairs `iconUrl` values using `src/lib/site-icon.ts`:
+
+- Icons that still answer with an image content type are kept untouched, so manually chosen icons survive.
+- Missing or dead icons are re-resolved from the site's own page: `<link rel="icon">` / `apple-touch-icon` hrefs first, then `favicon.ico|svg|png`.
+- Candidates are always scoped to the site's mount path. A site at `https://host/exam/` does **not** inherit `https://host/favicon.ico`, which belongs to whatever serves the domain root (here, SiteHarbor itself).
+- Two repairs cover common sub-path build bugs: a root-relative href retried under the mount path, and a base path joined without its separator (`/exam/` + `brand-logo.svg` shipped as `/exambrand-logo.svg`).
+- Every candidate must return an image content type — SPA rewrites answer `200 text/html` for any missing asset.
+- If nothing resolves, `iconUrl` is cleared and the gradient letter mark stays. Sites that genuinely declare no favicon (e.g. `/birthday/`) need an icon entered by hand on the site row.
+
+The Nginx scan uses the same resolver for newly imported sites instead of guessing `${origin}/favicon.ico`.
 
 ## Internationalisation
 

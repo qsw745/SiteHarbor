@@ -1,4 +1,8 @@
 services:
   siteharbor:
+    environment:
+      # Local runs read a database that mirrors production URLs, so the portal's
+      # own production entry must still be recognised as "self".
+      SELF_SITE_URLS: "https://qisw.top"
     volumes:
       - ./deploy/nginx-conf.d:/app/deploy/nginx-conf.d:ro

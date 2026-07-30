@@ -55,6 +55,7 @@ export type Dictionary = {
     title: string;
     subtitle: string;
     scanNginx: string;
+    refreshIcons: string;
     metricTotal: string;
     metricActive: string;
     metricInactive: string;
@@ -196,6 +197,7 @@ const zh: Dictionary = {
     title: "站点列表",
     subtitle: "维护链接、分类与显示状态，启用的站点会出现在公开首页。",
     scanNginx: "扫描 Nginx 配置",
+    refreshIcons: "刷新站点图标",
     metricTotal: "站点总数",
     metricActive: "启用",
     metricInactive: "停用",
@@ -290,10 +292,13 @@ const zh: Dictionary = {
     "category-updated": "分类已保存。",
     "category-deleted": "分类已删除，原站点会变为未分类。",
     "discovery-synced": "已同步 {{created}} 个新站点，更新 {{updated}} 个已有站点。",
+    "icons-refreshed":
+      "已修复 {{repaired}} 个站点图标，清理 {{cleared}} 个失效图标，{{kept}} 个保持不变。",
     "err-slug-taken": "站点 Slug 已存在，请换一个。",
     "err-site-not-found": "站点不存在。",
     "err-category-conflict": "分类名称或 Slug 已存在。",
     "err-discovery-empty": "没有发现可导入的网站，请确认服务器已挂载 Nginx 配置目录。",
+    "err-icons-no-sites": "还没有站点可以刷新图标。",
     "err-form-invalid": "表单内容无效。",
     "err-username-required": "请输入用户名。",
     "err-login-invalid": "用户名或密码不正确。",
@@ -371,6 +376,7 @@ const en: Dictionary = {
     subtitle:
       "Maintain links, categories and visibility. Active sites appear on the public homepage.",
     scanNginx: "Scan Nginx config",
+    refreshIcons: "Refresh site icons",
     metricTotal: "Total sites",
     metricActive: "Active",
     metricInactive: "Disabled",
@@ -467,11 +473,14 @@ const en: Dictionary = {
     "category-deleted": "Category deleted. Its sites are now uncategorised.",
     "discovery-synced":
       "Synced {{created}} new site(s) and updated {{updated}} existing one(s).",
+    "icons-refreshed":
+      "Repaired {{repaired}} icon(s), cleared {{cleared}} dead one(s), kept {{kept}} unchanged.",
     "err-slug-taken": "That site slug already exists. Choose another.",
     "err-site-not-found": "Site not found.",
     "err-category-conflict": "Category name or slug already exists.",
     "err-discovery-empty":
       "No sites discovered. Make sure the Nginx config directory is mounted.",
+    "err-icons-no-sites": "There are no sites to refresh icons for.",
     "err-form-invalid": "Form input is invalid.",
     "err-username-required": "Please enter the username.",
     "err-login-invalid": "Incorrect username or password.",

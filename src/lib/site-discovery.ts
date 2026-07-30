@@ -1,11 +1,11 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+import { isSelfSiteUrl } from "@/lib/self-site";
 import { makeSlug } from "@/lib/slug";
 
 export type DiscoveredSite = {
   description: string;
-  iconUrl: string | null;
   name: string;
   slug: string;
   sortOrder: number;
@@ -51,11 +51,6 @@ const EXCLUDED_EXACT_PATHS = new Set([
 ]);
 
 const KNOWN_SITE_DETAILS: Record<string, Pick<DiscoveredSite, "description" | "name" | "slug">> = {
-  "https://qisw.top/": {
-    name: "网站管理",
-    slug: "siteharbor",
-    description: "服务器网站聚合管理入口。",
-  },
   "https://qisw.top/benliu/": {
     name: "奔流",
     slug: "benliu",
@@ -85,9 +80,11 @@ export async function discoverServerSites() {
     }
   }
 
-  return Array.from(candidates.values()).sort((left, right) => {
-    return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
-  });
+  return Array.from(candidates.values())
+    .filter((site) => !isSelfSiteUrl(site.url))
+    .sort((left, right) => {
+      return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
+    });
 }
 
 async function listConfigFiles(rootPath: string): Promise<string[]> {
@@ -232,9 +229,10 @@ function makeSite(protocol: string, domain: string, sitePath: string, index: num
   const name = known?.name ?? fallbackName;
   const fallbackSlug = makeSlug(name) || makeSlug(`${domain}-${sitePath}`);
 
+  // Icons are resolved from the site's own page instead of guessed here: a
+  // sub-path site does not own `${origin}/favicon.ico`.
   return {
     description: known?.description ?? `从 Nginx 配置自动发现：${url}`,
-    iconUrl: `${protocol}://${domain}/favicon.ico`,
     name,
     slug: known?.slug ?? fallbackSlug,
     sortOrder: index * 10,

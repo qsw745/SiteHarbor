@@ -1,6 +1,7 @@
 import {
   createSiteAction,
   deleteSiteAction,
+  refreshSiteIconsAction,
   syncDiscoveredSitesAction,
   toggleSiteAction,
   updateSiteAction,
@@ -10,10 +11,12 @@ import { format, type Dictionary } from "@/lib/i18n";
 import { getActiveDictionary } from "@/lib/locale";
 import { messageFromParams, resolveMessage } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
+import { isSelfSiteUrl } from "@/lib/self-site";
 import {
   Activity,
   CheckCircle2,
   Globe2,
+  ImageDown,
   MousePointerClick,
   Plus,
   RefreshCcw,
@@ -60,12 +63,20 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
           <h2 className="text-2xl font-semibold tracking-tight">{dict.sites.title}</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">{dict.sites.subtitle}</p>
         </div>
-        <form action={syncDiscoveredSitesAction}>
-          <button className="btn-secondary" type="submit">
-            <RefreshCcw size={15} aria-hidden />
-            {dict.sites.scanNginx}
-          </button>
-        </form>
+        <div className="flex flex-wrap gap-2">
+          <form action={refreshSiteIconsAction}>
+            <button className="btn-secondary" type="submit">
+              <ImageDown size={15} aria-hidden />
+              {dict.sites.refreshIcons}
+            </button>
+          </form>
+          <form action={syncDiscoveredSitesAction}>
+            <button className="btn-secondary" type="submit">
+              <RefreshCcw size={15} aria-hidden />
+              {dict.sites.scanNginx}
+            </button>
+          </form>
+        </div>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -134,7 +145,7 @@ export default async function SitesPage({ searchParams }: SitesPageProps) {
         </aside>
       </section>
 
-      <PublicPreview sites={activeSites} dict={dict} />
+      <PublicPreview sites={activeSites.filter((site) => !isSelfSiteUrl(site.url))} dict={dict} />
     </div>
   );
 }
