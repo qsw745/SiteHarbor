@@ -57,9 +57,14 @@ const KNOWN_SITE_DETAILS: Record<string, Pick<DiscoveredSite, "description" | "n
     description: "部署在 qisw.top 下的奔流产品网站。",
   },
   "https://qisw.top/birthday/": {
-    name: "生日提醒",
+    name: "岁时",
     slug: "birthday",
-    description: "部署在 qisw.top 下的生日提醒服务。",
+    description: "农历生日提醒：记下家人朋友的重要日子，自动计算下一次生日，用邮件送达及时的提醒。",
+  },
+  "https://qisw.top/wenheng/": {
+    name: "问衡",
+    slug: "online-exam",
+    description: "AI 智能测评与学习平台：从题库练习、在线考试到阅卷与学习进度，让每一次练习都有反馈。",
   },
   "https://profiledock.qisw.top/": {
     name: "ProfileDock",
@@ -223,7 +228,9 @@ function normalizeProductPath(locationPath: string) {
 }
 
 function makeSite(protocol: string, domain: string, sitePath: string, index: number): DiscoveredSite {
-  const url = `${protocol}://${domain}${sitePath}`;
+  // The legacy exam route redirects to Wenheng; importing both would duplicate it.
+  const canonicalPath = domain === "qisw.top" && sitePath === "/exam/" ? "/wenheng/" : sitePath;
+  const url = `${protocol}://${domain}${canonicalPath}`;
   const known = KNOWN_SITE_DETAILS[url];
   const fallbackName = sitePath === "/" ? titleFromDomain(domain) : titleFromPath(sitePath);
   const name = known?.name ?? fallbackName;

@@ -41,3 +41,7 @@ tsconfig.tsbuildinfo
 
 # claude code session state
 .claude/
+
+# browser QA working artifacts (curated evidence lives in docs/design/qa)
+/output/playwright/
+/.playwright-cli/
