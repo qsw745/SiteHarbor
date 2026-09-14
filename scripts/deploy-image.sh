@@ -35,6 +35,7 @@ fi
 echo "Running local checks..."
 npm run lint
 npm run typecheck
+node --test scripts/tests/*.test.mjs
 
 echo "Building ${IMAGE_NAME} for ${PLATFORM} locally..."
 docker buildx build \

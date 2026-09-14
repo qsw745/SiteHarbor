@@ -20,6 +20,8 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
 - Environment model: local source, local Docker, and production use separate SQLite files/volumes. Local `/go/[slug]` may redirect to production-domain target URLs imported from mirrored Nginx configs, but local admin edits and click counts stay in the local database/volume until deployment.
 - Production runtime: Docker Compose.
+- Runtime images reuse pruned production dependencies and exclude npm/build caches. BuildKit keeps the npm cache outside image layers. SiteHarbor container logs rotate at 10 MB with 3 files.
+- Prisma 6.19.3 currently pins vulnerable `deepmerge-ts` 7.1.5. The scoped npm override selects 8.0.0; run `node --test scripts/tests/prisma-config.test.mjs` plus Prisma generate/migrate checks when changing this override. Keep Next.js and eslint-config-next versions aligned.
 - Docker image base stage installs `openssl` and `ca-certificates` from USTC Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
 - Deployment should build the `linux/amd64` Docker image locally with `scripts/deploy-image.sh`, upload it to the server, and start with `docker compose up -d --no-build`; avoid running expensive builds on the low-memory server.
 - For slow build networks, `scripts/deploy-image.sh` accepts optional `BUILD_PROXY_URL` (Docker build HTTP/HTTPS proxy only) and `BUILD_NPM_REGISTRY` (defaults to npm mirror). The image normalizes lockfile registry URLs to the selected registry without changing package versions or integrity hashes. Proxy settings are not persisted in the runtime image.
@@ -54,6 +56,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Product brands: Birthday is “岁时” (full product name “岁时·农历生日提醒”); the exam system is “问衡”. Migration `20260914040000_refresh_product_brands` updates only known legacy names/URLs, fills missing brand icons, and preserves IDs, slugs and click counts. `/go/online-exam` stays stable while its destination becomes `https://qisw.top/wenheng/`. Discovery canonicalizes `/exam/` to `/wenheng/` before deduplication. These changes reach each database only when its migration is applied.
 - Production data: Docker volume `siteharbor_siteharbor-data` (Compose key `siteharbor-data`), mounted at `/app/data`
 - Production database URL inside container: `file:/app/data/siteharbor.db`
+- Server journal budget is configured in `/etc/systemd/journald.conf.d/60-siteharbor-disk-budget.conf`: `SystemMaxUse=512M`, `SystemKeepFree=2G`. For disk cleanup, preserve container-used images, tagged rollback images, volumes, and database backups; prefer `docker image prune` without `-a` for dangling images.
 - Production admin password reset: `docker exec siteharbor npm run reset-admin-password -- --generate`
 - Production admin reset link: `docker exec siteharbor npm run issue-admin-reset-token`
 - Docker production builds use `npm run build:docker`, which skips Next.js internal typechecking; run `npm run typecheck` locally before pushing.

@@ -11,8 +11,14 @@ ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN sed -i "s|https://registry.npmmirror.com|${NPM_CONFIG_REGISTRY}|g" package-lock.json && npm ci
+RUN --mount=type=cache,id=siteharbor-npm,target=/root/.npm \
+  sed -i -E "s#https://registry\.(npmmirror\.com|npmjs\.org)#${NPM_CONFIG_REGISTRY}#g" package-lock.json \
+  && npm ci --maxsockets=5 --no-audit --no-fund
 RUN npx prisma generate
+
+FROM deps AS production-deps
+RUN --mount=type=cache,id=siteharbor-npm,target=/root/.npm \
+  npm prune --omit=dev --ignore-scripts --offline --no-audit --no-fund
 
 FROM base AS builder
 WORKDIR /app
@@ -20,6 +26,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build:docker
+RUN rm -rf .next/cache
 
 FROM base AS runner
 WORKDIR /app
@@ -29,10 +36,9 @@ ENV PORT=3000
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
 
-COPY package.json package-lock.json* ./
-COPY prisma ./prisma
-RUN sed -i "s|https://registry.npmmirror.com|${NPM_CONFIG_REGISTRY}|g" package-lock.json && npm ci --omit=dev
-RUN npx prisma generate
+COPY --from=production-deps /app/package*.json ./
+COPY --from=production-deps /app/prisma ./prisma
+COPY --from=production-deps /app/node_modules ./node_modules
 
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
