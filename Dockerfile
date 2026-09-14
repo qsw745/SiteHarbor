@@ -6,11 +6,12 @@ RUN sed -i 's|http://deb.debian.org/debian|http://mirrors.ustc.edu.cn/debian|g; 
 
 FROM base AS deps
 WORKDIR /app
-ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN npm ci
+RUN sed -i "s|https://registry.npmmirror.com|${NPM_CONFIG_REGISTRY}|g" package-lock.json && npm ci
 RUN npx prisma generate
 
 FROM base AS builder
@@ -25,11 +26,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+ENV NPM_CONFIG_REGISTRY=${NPM_REGISTRY}
 
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev
+RUN sed -i "s|https://registry.npmmirror.com|${NPM_CONFIG_REGISTRY}|g" package-lock.json && npm ci --omit=dev
 RUN npx prisma generate
 
 COPY --from=builder /app/.next ./.next

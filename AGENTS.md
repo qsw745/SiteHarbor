@@ -22,6 +22,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Production runtime: Docker Compose.
 - Docker image base stage installs `openssl` and `ca-certificates` from USTC Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
 - Deployment should build the `linux/amd64` Docker image locally with `scripts/deploy-image.sh`, upload it to the server, and start with `docker compose up -d --no-build`; avoid running expensive builds on the low-memory server.
+- For slow build networks, `scripts/deploy-image.sh` accepts optional `BUILD_PROXY_URL` (Docker build HTTP/HTTPS proxy only) and `BUILD_NPM_REGISTRY` (defaults to npm mirror). The image normalizes lockfile registry URLs to the selected registry without changing package versions or integrity hashes. Proxy settings are not persisted in the runtime image.
 - Reverse proxy: existing Docker container named `nginx`, with config mounted from `/opt/nginx/conf.d` and certificates from `/opt/nginx/ssl`.
 
 ## Repository
