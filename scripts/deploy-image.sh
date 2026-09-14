@@ -7,7 +7,7 @@ REMOTE_DIR="${REMOTE_DIR:-/opt/siteharbor}"
 BRANCH="${BRANCH:-main}"
 IMAGE_NAME="${IMAGE_NAME:-siteharbor-siteharbor:latest}"
 PLATFORM="${PLATFORM:-linux/amd64}"
-BUILD_PROXY_ARGS=()
+BUILD_PROXY_ARGS=(--build-arg "NPM_REGISTRY=${BUILD_NPM_REGISTRY:-https://registry.npmmirror.com}")
 if [[ -n "${BUILD_PROXY_URL:-}" ]]; then
   # Docker's predefined proxy arguments apply only while building the image.
   BUILD_PROXY_ARGS+=(--build-arg "HTTP_PROXY=${BUILD_PROXY_URL}" --build-arg "HTTPS_PROXY=${BUILD_PROXY_URL}")
@@ -40,7 +40,6 @@ echo "Building ${IMAGE_NAME} for ${PLATFORM} locally..."
 docker buildx build \
   "${BUILD_PROXY_ARGS[@]}" \
   --platform "$PLATFORM" \
-  --build-arg "NPM_REGISTRY=${BUILD_NPM_REGISTRY:-https://registry.npmmirror.com}" \
   -t "$IMAGE_NAME" \
   --output "type=docker,dest=${LOCAL_IMAGE_TAR}" \
   .
