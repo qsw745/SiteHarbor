@@ -20,7 +20,7 @@ SiteHarbor is a website aggregation and management portal for a server that host
 - Redirect behavior: `/go/[slug]` increments `clickCount` and redirects to the target URL.
 - Environment model: local source, local Docker, and production use separate SQLite files/volumes. Local `/go/[slug]` may redirect to production-domain target URLs imported from mirrored Nginx configs, but local admin edits and click counts stay in the local database/volume until deployment.
 - Production runtime: Docker Compose.
-- Docker image base stage installs `openssl` and `ca-certificates` from Aliyun Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
+- Docker image base stage installs `openssl` and `ca-certificates` from USTC Debian mirrors so Prisma can detect OpenSSL during generate, migration, and runtime on the China-hosted server.
 - Deployment should build the `linux/amd64` Docker image locally with `scripts/deploy-image.sh`, upload it to the server, and start with `docker compose up -d --no-build`; avoid running expensive builds on the low-memory server.
 - Reverse proxy: existing Docker container named `nginx`, with config mounted from `/opt/nginx/conf.d` and certificates from `/opt/nginx/ssl`.
 
