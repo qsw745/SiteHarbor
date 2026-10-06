@@ -293,7 +293,7 @@ const zh: Dictionary = {
     "category-deleted": "分类已删除，原站点会变为未分类。",
     "discovery-synced": "已同步 {{created}} 个新站点，更新 {{updated}} 个已有站点。",
     "icons-refreshed":
-      "已修复 {{repaired}} 个站点图标，清理 {{cleared}} 个失效图标，{{kept}} 个保持不变。",
+      "已更新 {{repaired}} 个站点图标，清理 {{cleared}} 个失效图标，{{kept}} 个保持不变（内置产品图标不会被刷新覆盖）。",
     "err-slug-taken": "站点 Slug 已存在，请换一个。",
     "err-site-not-found": "站点不存在。",
     "err-category-conflict": "分类名称或 Slug 已存在。",
@@ -322,7 +322,7 @@ const zh: Dictionary = {
     "err-slug-format": "Slug 只能包含小写字母、数字和短横线。",
     "err-url-invalid": "请输入有效的 URL。",
     "err-url-protocol": "URL 必须以 http:// 或 https:// 开头。",
-    "err-icon-url-invalid": "图标 URL 必须是有效的 http(s) 地址。",
+    "err-icon-url-invalid": "图标 URL 必须是有效的 http(s) 地址，或 /product-icons/ 下的内置图标。",
     "err-desc-too-long": "描述最长 240 个字符。",
     "err-sort-order-range": "排序值应在 0 到 99999 之间。",
   },
@@ -474,7 +474,7 @@ const en: Dictionary = {
     "discovery-synced":
       "Synced {{created}} new site(s) and updated {{updated}} existing one(s).",
     "icons-refreshed":
-      "Repaired {{repaired}} icon(s), cleared {{cleared}} dead one(s), kept {{kept}} unchanged.",
+      "Updated {{repaired}} icon(s), cleared {{cleared}} dead one(s), kept {{kept}} unchanged (bundled product icons are never overwritten).",
     "err-slug-taken": "That site slug already exists. Choose another.",
     "err-site-not-found": "Site not found.",
     "err-category-conflict": "Category name or slug already exists.",
@@ -505,7 +505,7 @@ const en: Dictionary = {
     "err-slug-format": "Slug may only contain lowercase letters, digits and dashes.",
     "err-url-invalid": "Please enter a valid URL.",
     "err-url-protocol": "URL must start with http:// or https://.",
-    "err-icon-url-invalid": "Icon URL must be a valid http(s) URL.",
+    "err-icon-url-invalid": "Icon URL must be a valid http(s) URL or a bundled /product-icons/ path.",
     "err-desc-too-long": "Description must be 240 characters or fewer.",
     "err-sort-order-range": "Sort order must be between 0 and 99999.",
   },

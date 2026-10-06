@@ -742,6 +742,10 @@ button {
   flex: 1 1 260px;
   max-width: 420px;
 }
+/* The clear button only appears with a query, so an empty field gets its space back. */
+.harbor-search input:placeholder-shown {
+  padding-right: 14px;
+}
 .harbor-search > svg {
   position: absolute;
   left: 15px;
@@ -919,11 +923,17 @@ button {
   overflow-wrap: anywhere;
 }
 .harbor-card-desc {
+  display: -webkit-box;
   margin: 10px 0 16px;
+  overflow: hidden;
   font-size: 13px;
   line-height: 1.85;
   color: var(--harbor-muted);
   text-wrap: pretty;
+  /* Three lines keep every card on the same rhythm; the full text is in the title. */
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 .harbor-card-host {
   margin: auto 0 16px;
@@ -1084,6 +1094,10 @@ button {
   .harbor-search {
     flex-basis: 100%;
     max-width: none;
+  }
+  /* Without category chips there is no second row to fill, so sort sits beside search. */
+  .harbor-controls-row-compact .harbor-search {
+    flex-basis: 0;
   }
   .harbor-search input {
     font-size: 16px;

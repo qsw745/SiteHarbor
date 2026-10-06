@@ -2,9 +2,10 @@
 
 import { adminPath } from "@/lib/messages";
 import { prisma } from "@/lib/prisma";
+import { isCuratedIcon } from "@/lib/product-icons";
 import { requireAdmin } from "@/lib/session";
 import { discoverServerSites } from "@/lib/site-discovery";
-import { isUsableIcon, mapWithLimit, resolveSiteIcon, resolveSiteIcons } from "@/lib/site-icon";
+import { mapWithLimit, refreshedSiteIcon, resolveSiteIcons } from "@/lib/site-icon";
 import { normalizeSlug } from "@/lib/slug";
 import { firstZodError, formString, siteFormSchema } from "@/lib/validation";
 import { Prisma } from "@prisma/client";
@@ -200,9 +201,10 @@ export async function syncDiscoveredSitesAction() {
 }
 
 /**
- * Re-resolve icons from each site's own page. Icons that still load are kept as
- * they are; missing or dead ones are repaired, and dead ones that cannot be
- * repaired are cleared so the avatar falls back to its letter mark.
+ * Re-resolve icons from each site's own page so the directory follows icon
+ * changes, not just dead links. Curated product icons are left alone, and a
+ * stored icon is only cleared when it is dead and the site still offers nothing
+ * usable after a retry, so the avatar falls back to its letter mark.
  */
 export async function refreshSiteIconsAction() {
   await requireAdmin();
@@ -214,20 +216,14 @@ export async function refreshSiteIconsAction() {
     redirectToSites({ error: "err-icons-no-sites" });
   }
 
-  const stillWorking = await mapWithLimit(sites, ICON_CONCURRENCY, (site) =>
-    site.iconUrl ? isUsableIcon(site.iconUrl) : Promise.resolve(false),
-  );
-
-  const brokenSites = sites.filter((_, index) => !stillWorking[index]);
-  const resolvedIcons = await mapWithLimit(brokenSites, ICON_CONCURRENCY, (site) =>
-    resolveSiteIcon(site.url),
-  );
+  const autoSites = sites.filter((site) => !isCuratedIcon(site.iconUrl));
+  const nextIcons = await mapWithLimit(autoSites, ICON_CONCURRENCY, refreshedSiteIcon);
 
   let repaired = 0;
   let cleared = 0;
 
-  for (const [index, site] of brokenSites.entries()) {
-    const iconUrl = resolvedIcons[index];
+  for (const [index, site] of autoSites.entries()) {
+    const iconUrl = nextIcons[index];
     if (iconUrl === site.iconUrl) continue;
 
     await prisma.site.update({

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">问衡</title>
+  <rect width="128" height="128" rx="30" fill="#10233F"/>
+  <path d="M25 67h78" stroke="#18A77B" stroke-width="8" stroke-linecap="round"/>
+  <path d="M38 51v32M90 51v32" stroke="#D9A441" stroke-width="7" stroke-linecap="round"/>
+  <path d="M47 47c2-11 10-17 20-17 13 0 21 7 21 18 0 9-5 13-13 18-6 4-8 7-8 13" fill="none" stroke="#FFF" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="67" cy="95" r="5" fill="#FFF"/>
+</svg>

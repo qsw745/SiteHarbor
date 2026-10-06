@@ -1,3 +1,4 @@
+import { isCuratedIcon } from "@/lib/product-icons";
 import { z } from "zod";
 
 const httpUrl = z
@@ -15,7 +16,7 @@ const optionalHttpUrl = z
   .optional()
   .transform((value) => value || null)
   .refine((value) => {
-    if (!value) return true;
+    if (!value || isCuratedIcon(value)) return true;
     const parsed = z.string().url().safeParse(value);
     if (!parsed.success) return false;
     const protocol = new URL(value).protocol;

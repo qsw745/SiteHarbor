@@ -1,5 +1,6 @@
 "use client";
 
+import { isCuratedIcon } from "@/lib/product-icons";
 import { useCallback, useState } from "react";
 
 type Size = "sm" | "md" | "lg" | "xl";
@@ -39,11 +40,14 @@ export function SiteAvatar({
   name,
   slug,
   size = "md",
+  isEager = false,
 }: {
   iconUrl?: string | null;
   name: string;
   slug: string;
   size?: Size;
+  /** Load immediately instead of lazily, for icons above the fold. */
+  isEager?: boolean;
 }) {
   const [iconStatus, setIconStatus] = useState<IconStatus>("loading");
   const gradient = pickGradient(slug || name || "x");
@@ -51,6 +55,9 @@ export function SiteAvatar({
   const displayIconUrl =
     iconUrl || (identity.includes("siteharbor") ? "/brand/siteharbor-icon.png" : null);
   const showIcon = Boolean(displayIconUrl) && iconStatus === "ok";
+  // Curated app icons are trimmed full-bleed tiles; remote favicons are often
+  // glyphs on transparency and need a padded white backdrop.
+  const isAppIcon = isCuratedIcon(displayIconUrl);
   const initial = (name.trim() || slug.trim() || "?").charAt(0).toUpperCase();
 
   // Load/error events can fire before React hydration attaches handlers,
@@ -64,10 +71,15 @@ export function SiteAvatar({
     <span
       className={`relative grid shrink-0 place-items-center overflow-hidden border border-[var(--line)] ${sizeClass[size]}`}
     >
-      <span aria-hidden className="absolute inset-0" style={{ background: gradient }} />
       <span
         aria-hidden
-        className="relative font-semibold text-white/95 [text-shadow:0_1px_4px_rgba(9,20,28,0.35)]"
+        className="absolute inset-0 transition-opacity duration-200"
+        style={{ background: gradient, opacity: showIcon ? 0 : 1 }}
+      />
+      <span
+        aria-hidden
+        className="relative font-semibold text-white/95 [text-shadow:0_1px_4px_rgba(9,20,28,0.35)] transition-opacity duration-200"
+        style={{ opacity: showIcon ? 0 : 1 }}
       >
         {initial}
       </span>
@@ -77,9 +89,14 @@ export function SiteAvatar({
           alt=""
           aria-hidden
           ref={inspectImage}
-          className="absolute inset-0 h-full w-full object-contain p-1 transition-opacity duration-200"
-          style={{ opacity: showIcon ? 1 : 0, background: showIcon ? "white" : "transparent" }}
+          className={`absolute inset-0 h-full w-full transition-opacity duration-200 ${
+            isAppIcon ? "object-cover" : "object-contain bg-white p-1"
+          }`}
+          style={{ opacity: showIcon ? 1 : 0 }}
           src={displayIconUrl}
+          // Bundled icons are a few KB each, so loading them lazily only adds a letter flash.
+          loading={isEager || isAppIcon ? "eager" : "lazy"}
+          decoding="async"
           referrerPolicy="no-referrer"
           onLoad={() => setIconStatus("ok")}
           onError={() => setIconStatus("error")}

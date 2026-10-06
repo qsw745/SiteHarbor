@@ -3,6 +3,8 @@ const MAX_HTML_BYTES = 512 * 1024;
 const MAX_CANDIDATES = 10;
 const DEFAULT_CONCURRENCY = 4;
 const FALLBACK_ICON_NAMES = ["favicon.ico", "favicon.svg", "favicon.png"];
+// Icons are shown at up to 72px (144 device pixels); anything smaller turns to mush.
+const MIN_SHARP_ICON_PX = 96;
 const IMAGE_EXTENSION = /\.(ico|png|svg|jpe?g|webp|gif|avif)$/i;
 const OPAQUE_CONTENT_TYPES = new Set(["", "application/octet-stream", "binary/octet-stream"]);
 
@@ -55,6 +57,19 @@ export async function isUsableIcon(iconUrl: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Decide the icon a refresh should store: follow what the site declares now,
+ * keep a stored icon that still loads when nothing resolves, and retry once
+ * before clearing so a single network hiccup cannot wipe a working icon.
+ */
+export async function refreshedSiteIcon(site: { iconUrl: string | null; url: string }): Promise<string | null> {
+  const resolved = await resolveSiteIcon(site.url);
+  if (resolved) return resolved;
+  if (!site.iconUrl) return null;
+  if (await isUsableIcon(site.iconUrl)) return site.iconUrl;
+  return resolveSiteIcon(site.url);
 }
 
 /** Resolve icons for many sites with a bounded number of concurrent requests. */
@@ -127,21 +142,48 @@ function extractDeclaredIcons(html: string): DeclaredIcon[] {
     const href = readAttribute(tag, "href");
     if (!rel || !href) continue;
 
-    const rank = rankRel(rel.split(/\s+/).filter(Boolean));
+    const rank = rankIcon({
+      relTokens: rel.split(/\s+/).filter(Boolean),
+      href,
+      sizes: readAttribute(tag, "sizes")?.toLowerCase() ?? "",
+      type: readAttribute(tag, "type")?.toLowerCase() ?? "",
+    });
     if (rank === null) continue;
     icons.push({ href, rank });
   }
 
+  // Array#sort is stable, so equally ranked icons keep their document order.
   return icons.sort((left, right) => left.rank - right.rank);
 }
 
-function rankRel(relTokens: readonly string[]): number | null {
+/**
+ * Lower is better. Scalable and large icons beat the 16/32px favicons many sites
+ * still declare first, which look blurry at card size.
+ */
+function rankIcon(icon: { relTokens: readonly string[]; href: string; sizes: string; type: string }): number | null {
+  const isTouchIcon =
+    icon.relTokens.includes("apple-touch-icon") || icon.relTokens.includes("apple-touch-icon-precomposed");
   // `mask-icon` is a monochrome silhouette, so it is deliberately ignored.
-  if (relTokens.includes("icon")) return 0;
-  if (relTokens.includes("apple-touch-icon") || relTokens.includes("apple-touch-icon-precomposed")) {
-    return 1;
-  }
-  return null;
+  if (!icon.relTokens.includes("icon") && !isTouchIcon) return null;
+
+  const isScalable =
+    icon.sizes.split(/\s+/).includes("any") ||
+    icon.type === "image/svg+xml" ||
+    /\.svg(?:[?#]|$)/i.test(icon.href);
+  if (isScalable) return 0;
+
+  const largestSize = largestDeclaredSize(icon.sizes);
+  // Touch icons are 180px by convention even when they omit `sizes`.
+  if (largestSize >= MIN_SHARP_ICON_PX || (isTouchIcon && !largestSize)) return 1;
+  if (largestSize) return 3;
+  return /\.ico(?:[?#]|$)/i.test(icon.href) ? 3 : 2;
+}
+
+function largestDeclaredSize(sizes: string): number {
+  return sizes
+    .split(/\s+/)
+    .map((token) => /^(\d+)x\d+$/.exec(token)?.[1])
+    .reduce((largest, width) => Math.max(largest, Number(width ?? 0)), 0);
 }
 
 function readAttribute(tag: string, name: string): string | null {

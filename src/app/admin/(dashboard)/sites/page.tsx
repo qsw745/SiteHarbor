@@ -333,7 +333,12 @@ function SiteFields({
           defaultValue={site?.iconUrl ?? ""}
           name="iconUrl"
           placeholder={dict.fields.iconUrlPlaceholder}
-          type="url"
+          // Bundled icons use site-relative /product-icons/ paths, which a
+          // type="url" field would refuse; the server validates the format.
+          type="text"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
         />
       </label>
       <label className="admin-label">

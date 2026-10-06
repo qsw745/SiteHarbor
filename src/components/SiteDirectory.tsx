@@ -100,6 +100,9 @@ export function SiteDirectory({
     categories.filter((item) =>
       sites.some((site) => site.categorySlug === item.slug),
     ).length + (hasUncategorized ? 1 : 0);
+  // With a single category, chips, card tags and the category stat only repeat
+  // the same label, so the directory drops them until there is a real choice.
+  const showCategories = usedCategoryCount > 1;
 
   const featuredSite = useMemo(() => {
     if (isFiltering || !sites.length) return null;
@@ -152,10 +155,12 @@ export function SiteDirectory({
 
           <dl className="harbor-ledger" aria-label={copy.statsLabel}>
             <LedgerRow label={copy.sitesLabel} value={sites.length} />
-            <LedgerRow
-              label={dict.home.statCategories}
-              value={usedCategoryCount}
-            />
+            {showCategories ? (
+              <LedgerRow
+                label={dict.home.statCategories}
+                value={usedCategoryCount}
+              />
+            ) : null}
             <LedgerRow label={dict.home.statVisits} value={totalVisits} />
           </dl>
         </div>
@@ -174,7 +179,9 @@ export function SiteDirectory({
             })}
           </span>
         </div>
-        <div className="harbor-controls-row">
+        <div
+          className={`harbor-controls-row ${showCategories ? "" : "harbor-controls-row-compact"}`}
+        >
           <div className="harbor-search">
             <Search aria-hidden size={16} />
             <label className="sr-only" htmlFor="directory-search">
@@ -210,39 +217,41 @@ export function SiteDirectory({
             ) : null}
           </div>
 
-          <div className="harbor-category-strip">
-            <CategoryChip
-              active={category === "all"}
-              onClick={() => selectCategory("all")}
-            >
-              {dict.home.all}
-              <Counter>{sites.length}</Counter>
-            </CategoryChip>
-            {categories.map((item) => {
-              const count = sites.filter(
-                (site) => site.categorySlug === item.slug,
-              ).length;
-              if (!count) return null;
-              return (
-                <CategoryChip
-                  key={item.id}
-                  active={category === item.slug}
-                  onClick={() => selectCategory(item.slug)}
-                >
-                  {item.name}
-                  <Counter>{count}</Counter>
-                </CategoryChip>
-              );
-            })}
-            {hasUncategorized ? (
+          {showCategories ? (
+            <div className="harbor-category-strip">
               <CategoryChip
-                active={category === "uncategorized"}
-                onClick={() => selectCategory("uncategorized")}
+                active={category === "all"}
+                onClick={() => selectCategory("all")}
               >
-                {dict.home.uncategorized}
+                {dict.home.all}
+                <Counter>{sites.length}</Counter>
               </CategoryChip>
-            ) : null}
-          </div>
+              {categories.map((item) => {
+                const count = sites.filter(
+                  (site) => site.categorySlug === item.slug,
+                ).length;
+                if (!count) return null;
+                return (
+                  <CategoryChip
+                    key={item.id}
+                    active={category === item.slug}
+                    onClick={() => selectCategory(item.slug)}
+                  >
+                    {item.name}
+                    <Counter>{count}</Counter>
+                  </CategoryChip>
+                );
+              })}
+              {hasUncategorized ? (
+                <CategoryChip
+                  active={category === "uncategorized"}
+                  onClick={() => selectCategory("uncategorized")}
+                >
+                  {dict.home.uncategorized}
+                </CategoryChip>
+              ) : null}
+            </div>
+          ) : null}
           <DirectorySort
             label={copy.sortLabel}
             value={sort}
@@ -261,7 +270,13 @@ export function SiteDirectory({
           {filteredSites
             .filter((site) => !featuredSite || site.id !== featuredSite.id)
             .map((site) => (
-              <SiteCard key={site.id} site={site} dict={dict} locale={locale} />
+              <SiteCard
+                key={site.id}
+                site={site}
+                dict={dict}
+                locale={locale}
+                showCategory={showCategories}
+              />
             ))}
         </section>
       ) : (
@@ -332,6 +347,7 @@ function FeaturedCard({
           name={site.name}
           slug={site.slug}
           size="lg"
+          isEager
         />
         <div>
           <h2>{site.name}</h2>
@@ -355,13 +371,16 @@ function SiteCard({
   site,
   dict,
   locale,
+  showCategory,
 }: {
   site: DirectorySite;
   dict: Dictionary;
   locale: Locale;
+  showCategory: boolean;
 }) {
   const copy = getDirectoryCopy(locale);
   const categoryLabel = site.categoryName || dict.home.uncategorized;
+  const description = site.description || dict.home.noDescription;
   return (
     <a
       className="harbor-card focus-ring"
@@ -377,11 +396,13 @@ function SiteCard({
           slug={site.slug}
           size="lg"
         />
-        <span className="harbor-tag">{categoryLabel}</span>
+        {showCategory ? (
+          <span className="harbor-tag">{categoryLabel}</span>
+        ) : null}
       </div>
       <h3 className="harbor-card-name">{site.name}</h3>
-      <p className="harbor-card-desc">
-        {site.description || dict.home.noDescription}
+      <p className="harbor-card-desc" title={description}>
+        {description}
       </p>
       <p className="harbor-card-host">{formatUrl(site.url)}</p>
       <div className="harbor-card-foot">
@@ -455,7 +476,7 @@ function getDirectoryCopy(locale: Locale) {
         featuredLabel: "Most visited",
         openSite: "Open site",
         exploreSite: "Explore this product",
-        searchPlaceholder: "Find a product, a feature, or a link…",
+        searchPlaceholder: "Search products…",
         clearSearch: "Clear search",
         sortLabel: "Sort products",
         sortDefault: "Default order",
@@ -481,7 +502,7 @@ function getDirectoryCopy(locale: Locale) {
         featuredLabel: "最多人访问",
         openSite: "进入网站",
         exploreSite: "探索这个产品",
-        searchPlaceholder: "搜索产品、功能或网址…",
+        searchPlaceholder: "搜索产品或功能…",
         clearSearch: "清空搜索",
         sortLabel: "产品排序",
         sortDefault: "默认排序",
